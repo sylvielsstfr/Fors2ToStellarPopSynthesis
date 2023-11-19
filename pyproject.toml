@@ -14,6 +14,7 @@ classifiers = [
     "Programming Language :: Python",
 ]
 dynamic = ["version"]
+
 dependencies = [
     "ipykernel", # Support for Jupyter notebooks
 ]
@@ -37,11 +38,26 @@ dev = [
     "matplotlib", # Used in sample notebook intro_notebook.ipynb
     "numpy", # Used in sample notebook intro_notebook.ipynb
     "asv==0.6.1", # Used to compute performance benchmarks
+    "jax", # key package used for autodifferentiation and vectorisation
+    "jaxlib", # key package used for optimisations
+    "jaxopt", # key package used for optimisations
+    "optax", # key package used for optimisations
+    "corner", # for MCMC parameters visualisation
+    "arviz", # for MCMC parameters visualisation
+    "numpyro", # for probabilistic programming
+    "interpax", # for differentiable interpolation
+    "numpy",
+    "dsps",
+    "diffstar",
+    "diffmah",
+    "astro-sedpy",
+    "seaborn",
 ]
+
 
 [metadata]
 long_description = { file = "README.md" }
-url = "https://github.com/LSSTDESC/fors2tostellarpopsynthesis"
+url = "https://github.com/sylvielsstfr/Fors2ToStellarPopSynthesis"
 
 [build-system]
 requires = [

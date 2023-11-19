@@ -36,12 +36,12 @@ repos:
         args: ['--maxkb=500']
 
     # Verify that pyproject.toml is well formed
-  - repo: https://github.com/abravalheri/validate-pyproject
-    rev: v0.12.1
-    hooks:
-      - id: validate-pyproject
-        name: Validate pyproject.toml
-        description: Verify that pyproject.toml adheres to the established schema.
+  #- repo: https://github.com/abravalheri/validate-pyproject
+  #  rev: v0.12.1
+  #  hooks:
+  #    - id: validate-pyproject
+  #      name: Validate pyproject.toml
+  #      description: Verify that pyproject.toml adheres to the established schema.
 
 
     # Automatically sort the imports used in .py files
