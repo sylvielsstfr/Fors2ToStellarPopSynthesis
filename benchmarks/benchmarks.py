@@ -3,7 +3,8 @@
 For more information on writing benchmarks:
 https://asv.readthedocs.io/en/stable/writing_benchmarks.html."""
 
-import example_benchmarks
+#import example_benchmarks
+from fors2tostellarpopsynthesis import example_benchmarks
 
 
 def time_computation():
