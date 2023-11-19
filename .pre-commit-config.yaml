@@ -114,7 +114,7 @@ repos:
         name: Build documentation with Sphinx
         entry: sphinx-build
         language: system
-        always_run: true
+        always_run: false
         exclude_types: [file, symlink]
         args:
           [
