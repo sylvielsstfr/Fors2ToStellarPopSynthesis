@@ -34,9 +34,23 @@ ordered_keys = ['name','num','ra','dec', 'redshift','Rmag','RT', 'RV','eRV','Nsp
 FILENAME_FORS2PHOTOM = "data/FORS2spectraGalexKidsPhotom.h5"
 FILENAME_STARLIGHT = "data/SLspectra.h5"
 
-FULL_FILENAME_FORS2PHOTOM = os.path.join(__path__,FILENAME_FORS2PHOTOM)
-FULL_FILENAME_STARLIGHT = os.path.join(__path__,FILENAME_STARLIGHT)
-#---------------
+
+
+def _getPackageDir():
+    """This method must live in the top level of this package, so if this
+    moves to a utils file then the returned path will need to account for that.
+    """
+    dirname = os.path.dirname(__file__)
+    return dirname
+
+
+
+FULL_FILENAME_FORS2PHOTOM = os.path.join(_getPackageDir(),FILENAME_FORS2PHOTOM)
+FULL_FILENAME_STARLIGHT = os.path.join(_getPackageDir(),FILENAME_STARLIGHT)
+
+
+
+
 def convertflambda_to_fnu(wl:np.array, flambda:np.array) -> np.array:
     """
     Convert spectra density flambda to fnu.
