@@ -20,8 +20,9 @@ from sedpy import observate
 
 
 class FilterInfo():
-    """_Class to encapsulate different tasks to fetch the filters
-    transmissions_
+    """Class to encapsulate different tasks to fetch the filters
+    transmissions. The survey used are Galex in UV, SDSS for KIDS 
+    in visible and VISTA in IR.
     """
     def __init__(self)->None :
         self.filters_galex = np.array(["galex_FUV","galex_NUV"])
@@ -105,7 +106,8 @@ class FilterInfo():
 
     def get_pytree(self):
         """
-        _return a dict of a tuple of a dict_
+        :return: a dict of a tuple of a dict
+        :rtype: a dict
         """
         the_dict = OrderedDict()
 
@@ -129,7 +131,9 @@ class FilterInfo():
 
     def get_2lists(self):
         """
-        _return a list of a pair of lists_
+        Provide filter transmissions curves as a tuple of lists for all filters
+        :return: a list of wavelengths for each filter and a list of transmission for each filter 
+        :rtype: two lists
         """
         the_list1 = []
         the_list2 = []
@@ -151,7 +155,9 @@ class FilterInfo():
 
     def get_3lists(self):
         """
-        return a list of a  of 3 lists
+        Provide filter transmissions curves as a triplet of lists
+        :return: a 3-tuple of array, 1) wavelengths, 2) transmissions, 3) the name
+        :rtype: 3 lists
         """
         the_list1 = []
         the_list2 = []
@@ -175,10 +181,9 @@ class FilterInfo():
         return the_list1,the_list2,the_list3
 
     def plot_transmissions(self,ax = None)-> None:
-        """_plot transmission of filters_
-
-        :param ax: _figure axis to plot the image_, defaults to None
-        :type ax: _matplotlib axis_, optional
+        """plot transmission of filters
+        :param ax: figure axis to plot the image, defaults to None
+        :type ax: matplotlib axis, optional
         """
 
         if ax is None:
@@ -205,7 +210,7 @@ class FilterInfo():
         ax.set_xlim(0.,25000.)
 
     def dump(self):
-        """_Dump the filter_
+        """Dump all the filters info available
         """
         print("filters_indexlist   : \t ", self.filters_indexlist)
         print("filters_surveylist  : \t ", self.filters_surveylist)
