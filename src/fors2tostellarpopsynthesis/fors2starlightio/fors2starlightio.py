@@ -8,6 +8,8 @@
 # pylint: disable=unused-import
 # pylint: disable=anomalous-backslash-in-string
 # pylint: disable=too-many-locals
+# pylint: disable=broad-exception-caught
+# pylint: disable=too-many-statements
 
 import os
 import re
@@ -20,7 +22,7 @@ from astropy import constants as const
 from astropy import units as u
 from sklearn.gaussian_process import GaussianProcessRegressor, kernels
 
-kernel = kernels.RBF(0.5, (8000, 10000.0))
+kernel = kernels.RBF(0.5, (6000, 10000.0))
 gpr = GaussianProcessRegressor(kernel=kernel ,random_state=0)
 
 U_FNU = u.def_unit(u'fnu',  u.erg / (u.cm**2 * u.s * u.Hz))
@@ -40,7 +42,7 @@ lambda_H = 16300.
 lambda_K = 21900.
 lambda_L = 34500.
 
-PHOTWL = [lambda_FUV, lambda_NUV, lambda_B, lambda_G, lambda_R ,lambda_I, lambda_Z, lambda_Y, lambda_J, lambda_H, lambda_K ]
+PHOTWL = np.array([lambda_FUV, lambda_NUV, lambda_B, lambda_G, lambda_R ,lambda_I, lambda_Z, lambda_Y, lambda_J, lambda_H, lambda_K ])
 PHOTFilterTag = ['FUV','NUV','B','G','R','I','Z','Y','J','H','Ks']
 
 def plot_filter_tag(ax,fluxlist):
@@ -339,7 +341,7 @@ class Fors2DataAcess():
         spec = self.getspectrumcleanedemissionlines_fromgroup(specname)
         attrs = self.getattribdata_fromgroup(specname)
         z_obs = attrs["redshift"]
-        title = specname + f" redshift = {z_obs:.3f}"
+        title = specname + f" redshift = {z_obs:.3f}" + " spectrum Not rescaled"
 
         mags = np.array([ attrs["fuv_mag"], attrs["nuv_mag"], attrs['MAG_GAAP_u'], attrs['MAG_GAAP_g'], attrs['MAG_GAAP_r'], attrs['MAG_GAAP_i'], attrs['MAG_GAAP_Z'], attrs['MAG_GAAP_Y'],
             attrs['MAG_GAAP_J'], attrs['MAG_GAAP_H'],attrs['MAG_GAAP_Ks'] ])
@@ -406,7 +408,7 @@ class Fors2DataAcess():
         spec = self.getspectrumcleanedemissionlines_fromgroup(specname)
         attrs = self.getattribdata_fromgroup(specname)
         z_obs = attrs["redshift"]
-        title = specname + f" redshift = {z_obs:.3f}" + "spectrum rescaled"
+        title = specname + f" redshift = {z_obs:.3f}" + " spectrum rescaled"
 
         mags = np.array([ attrs["fuv_mag"], attrs["nuv_mag"], attrs['MAG_GAAP_u'], attrs['MAG_GAAP_g'], attrs['MAG_GAAP_r'], attrs['MAG_GAAP_i'], attrs['MAG_GAAP_Z'], attrs['MAG_GAAP_Y'],
             attrs['MAG_GAAP_J'], attrs['MAG_GAAP_H'],attrs['MAG_GAAP_Ks'] ])
@@ -433,23 +435,36 @@ class Fors2DataAcess():
         Yspec = spec["fnu"]
 
         # show the faussian process fitted
-        gpr.fit(Xspec[:, None], Yspec)
-        xfit = np.linspace(Xspec.min(),Xspec.max())
-        yfit, yfit_err = gpr.predict(xfit[:, None], return_std=True)
-        ax.plot(xfit, yfit, '-', color='cyan')
-        ax.fill_between(xfit, yfit -  yfit_err, yfit +  yfit_err, color='gray', alpha=0.3)
+        try:
+            gpr.fit(Xspec[:, None], Yspec)
+            xfit = np.linspace(Xspec.min(),Xspec.max())
+            yfit, yfit_err = gpr.predict(xfit[:, None], return_std=True)
 
-        photom_wl_inrange_indexes = np.where(np.logical_and(PHOTWL>Xspec.min(),PHOTWL<Xspec.max()))[0]
+            photom_wl_inrange_indexes = np.where(np.logical_and(PHOTWL>Xspec.min(),PHOTWL<Xspec.max()))[0]
 
-        Xphot = PHOTWL[photom_wl_inrange_indexes]
-        Yphot = mfluxes[photom_wl_inrange_indexes]
+            Xphot = PHOTWL[photom_wl_inrange_indexes]
+            Yphot = mfluxes[photom_wl_inrange_indexes]
 
-        yfit_photom = gpr.predict(Xphot[:, None], return_std=False)
-        scaling_factor = np.median(Yphot/yfit_photom)
+            yfit_photom = gpr.predict(Xphot[:, None], return_std=False)
 
-        Yspec = Yspec*scaling_factor
+            # scaling factor is flux-photom/flux-spec
+            scaling_factor = np.mean(Yphot/yfit_photom)
 
-        ax.plot(Xspec,Yspec,'-',color="b")
+            # correct spectrum
+            Yspec *= scaling_factor
+
+            # correcte fitted gaussian
+            yfit *= scaling_factor
+            yfit_err *= scaling_factor
+
+            ax.plot(Xspec,Yspec,'-',color="b")
+            ax.plot(xfit, yfit, '-', color='cyan')
+            ax.fill_between(xfit, yfit -  yfit_err, yfit +  yfit_err, color='gray', alpha=0.3)
+        except Exception as e:
+            scaling_factor = 0.0
+            print(e)
+
+
 
         ax.set_xlabel("$\lambda (\\AA)$")
         ylabel = "$f_\\nu$ (a.u)"
@@ -461,6 +476,18 @@ class Fors2DataAcess():
         ax.errorbar(PHOTWL,mfluxes,yerr=mfluxeserr,fmt='o',color="r",ecolor="r",ms=7,label='Galex (UV) + Kids (optics) + VISTA')
         ax.set_ylabel("maggies")
         plot_filter_tag(ax,mfluxes)
+
+        if scaling_factor !=0:
+            all_y = np.concatenate([Yspec,mfluxes[2:]])
+        else:
+            all_y = mfluxes[2:]
+
+
+        ymax = np.max(all_y)
+
+        if ymax>0:
+            ax.set_ylim(0.,ymax)
+
         plt.show()
 
 
