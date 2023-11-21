@@ -6,11 +6,13 @@
 # pylint: disable=no-member
 # pylint: disable=invalid-name
 # pylint: disable=unused-import
+# pylint: disable=anomalous-backslash-in-string
 
 import os
 from collections import OrderedDict
 
 import h5py
+import matplotlib.pyplot as plt
 import numpy as np
 from astropy import constants as const
 from astropy import units as u
@@ -106,6 +108,37 @@ def flux_norm(
     idx_wl_sel = np.where(np.logical_and(wl>= lambda_sel_min,wl<= lambda_sel_max))[0]
     flarr_norm = fl[idx_wl_sel]
     return np.median(flarr_norm)
+
+def convert_flux_torestframe(wl: np.array,fl: np.array,redshift:float=0.) -> tuple[np.array, np.array]:
+    """Transform the current flux into restframe
+
+    :param wl: wavelength
+    :type wl: np.array
+    :param fl: flux
+    :type fl: np.array
+    :param redshift: redshift of the object, defaults to 0
+    :type redshift: float, optional
+    :return: the spectrum blueshifted in restframe
+    :rtype: tuple[np.array, np.array]
+    """
+    factor = 1.+redshift
+    return wl/factor,fl*factor
+
+def convert_flux_toobsframe(wl: np.array,fl: np.array,redshift:float=0.) -> tuple[np.array, np.array] :
+    """convert flux to observed frame
+
+    :param wl: wavelength
+    :type wl: np.array
+    :param fl: flux
+    :type fl: np.array
+    :param redshift: redshift of the object, defaults to 0
+    :type redshift: int, optional
+    :return: the spectrum redshifted
+    :rtype: tuple[np.array, np.array]
+    """
+    factor = 1.+redshift
+    return wl*factor,fl/factor
+
 
 
 
@@ -251,6 +284,56 @@ class Fors2DataAcess():
             print(f'getspectrum_fromgroup : No group {groupname}')
         return spec_dict
 
+    def plot_allspectra(self,ax = None, figsize=(12,6),ylim=(1e-1,1e2),mode="fl",frame="obs"):
+        """plot all fors2 spectra
+
+        :param ax: matplotlib axe, defaults to None
+        :type ax: ax, optional
+        :param figsize: figure size, defaults to (12,6)
+        :type figsize: tuple, optional
+        :param mode: specify if want flambda (fl) or fnu
+        :type mode: str, optional
+        :param frame: rest frame or obs frame
+        :param frame: str, optional
+        :param ylim: tuple for y boundary figure vertical scale
+        :type ylim: tuple of 2 floats
+        """
+
+        if ax is None:
+            _, ax =plt.subplots(1,1,figsize=figsize)
+
+        fors2_tags = self.get_list_of_groupkeys()
+
+        for tag in fors2_tags:
+            spec = self.getspectrum_fromgroup(tag)
+
+            if frame == "obs":
+                title = "Fors2 spectra in obs frame"
+                if mode == "fl":
+                    x,y = spec["wl"],spec["fl"]
+                    ylabel = "$f_\\lambda$ (a.u)"
+                else:
+                    x,y= spec["wl"],spec["fnu"]
+                    ylabel = "$f_\nu$ (a.u)"
+            else:
+                title = "Fors2 spectra in rest frame"
+                if mode == "fl":
+                    x,y = convert_flux_torestframe(spec["wl"],spec["fl"])
+                    ylabel = "$f_\\lambda$ (a.u)"
+                else:
+                    x,y = convert_flux_torestframe(spec["wl"],spec["fnu"])
+                    ylabel = "$f_\nu$ (a.u)"
+            ax.plot(x,y)
+
+
+        ax.set_yscale("log")
+        ax.set_ylim(ylim)
+        ax.set_ylabel(ylabel)
+        ax.set_xlabel("$\lambda (\\AA)$")
+        ax.set_title(title)
+        ax.grid()
+
+        plt.show()
 
 class SLDataAcess():
     """Handle Access to starlight spectra
@@ -342,4 +425,50 @@ class SLDataAcess():
         else:
             print(f'getspectrum_fromgroup : No group {groupname}')
         return spec_dict
+
+    def plot_allspectra(self,ax = None, figsize=(12,6),xlim=(0.,2e4),ylim=(1e-6,1e-3),mode="fl"):
+        """plt all starlight spectra
+
+        :param ax: axe, defaults to None
+        :type ax: ax, optional
+        :param figsize: size of the figure, defaults to (12,6)
+        :type figsize: tuple, optional
+        :param xlim: tuple for x boundary figure horizontal scale
+        :type xlim: tuple of 2 floats
+        :param ylim: tuple for y boundary figure vertical scale
+        :type ylim: tuple of 2 floats
+        :param mode: choose the type of flux, defaults to "fl" or "fnu"
+        :type mode: str, optional
+        """
+
+        if ax is None:
+            _, ax =plt.subplots(1,1,figsize=figsize)
+
+        sl_tags = self.get_list_of_groupkeys()
+
+        for tag in sl_tags:
+            spec = self.getspectrum_fromgroup(tag)
+
+
+            title = "StarLight spectra (rest frame)"
+            if mode == "fl":
+                x,y = spec["wl"],spec["fl"]
+                ylabel = "$f_\\lambda$ (a.u)"
+            else:
+                x,y= spec["wl"],spec["fnu"]
+                ylabel = "$f_\nu$ (a.u)"
+
+            ax.plot(x,y)
+
+        ax.set_yscale("log")
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        ax.set_xlabel("$\lambda (\\AA)$")
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+        ax.grid()
+
+        plt.show()
+
+
 
