@@ -6,18 +6,65 @@
 # pylint: disable=no-member
 # pylint: disable=invalid-name
 # pylint: disable=unused-import
+# pylint: disable=anomalous-backslash-in-string
+# pylint: disable=too-many-locals
+# pylint: disable=broad-exception-caught
+# pylint: disable=too-many-statements
 
 import os
+import re
 from collections import OrderedDict
 
 import h5py
+import matplotlib.pyplot as plt
 import numpy as np
 from astropy import constants as const
 from astropy import units as u
 from sklearn.gaussian_process import GaussianProcessRegressor, kernels
 
+kernel = kernels.RBF(0.5, (6000, 10000.0))
+gpr = GaussianProcessRegressor(kernel=kernel ,random_state=0)
+
 U_FNU = u.def_unit(u'fnu',  u.erg / (u.cm**2 * u.s * u.Hz))
 U_FL = u.def_unit(u'fl',  u.erg / (u.cm**2 * u.s * u.AA))
+
+lambda_FUV = 1528.
+lambda_NUV = 2271.
+lambda_U = 3650.
+lambda_B = 4450.
+lambda_G = 4640.
+lambda_R = 5580.
+lambda_I = 8060.
+lambda_Z = 9000.
+lambda_Y = 10200.
+lambda_J = 12200.
+lambda_H = 16300.
+lambda_K = 21900.
+lambda_L = 34500.
+
+PHOTWL = np.array([lambda_FUV, lambda_NUV, lambda_B, lambda_G, lambda_R ,lambda_I, lambda_Z, lambda_Y, lambda_J, lambda_H, lambda_K ])
+PHOTFilterTag = ['FUV','NUV','B','G','R','I','Z','Y','J','H','Ks']
+
+def plot_filter_tag(ax,fluxlist):
+    """Show the name of the photometric filter
+
+    :param ax: the axis
+    :type ax: axis
+    :param fluxlist: _description_
+    :type fluxlist: _type_
+    """
+    goodfl = fluxlist[np.isfinite(fluxlist)]
+    ymin = np.mean(goodfl)
+    dy=ymin/5
+
+    for idx,flux in enumerate(fluxlist):
+        if np.isfinite(flux):
+            #ax.text(WL[idx],flux, FilterTag[idx],fontsize=10,ha='center', va='bottom')
+
+            fl = flux - dy
+            if fl <0:
+                fl += 2*dy
+            ax.text(PHOTWL[idx],fl, PHOTFilterTag[idx],fontsize=16,color="g",weight='bold',ha='center', va='bottom')
 
 # ---------------
 ordered_keys = ['name','num','ra','dec', 'redshift','Rmag','RT', 'RV','eRV','Nsp','lines',
@@ -75,12 +122,7 @@ def convertflambda_to_fnu(wl:np.array, flambda:np.array) -> np.array:
 
     return fnu
 
-def flux_norm(
-    wl: np.array,
-    fl: np.array,
-    wlcenter: float = 6231.,
-    wlwdt: float = 50.
-) -> float:
+def flux_norm(wl: np.array,fl: np.array,wlcenter: float = 6231.,wlwdt: float = 50.) -> float:
     """Normalize the flux at a given wavelength
 
     :param wl: wavelength array of the spectrum
@@ -106,6 +148,37 @@ def flux_norm(
     idx_wl_sel = np.where(np.logical_and(wl>= lambda_sel_min,wl<= lambda_sel_max))[0]
     flarr_norm = fl[idx_wl_sel]
     return np.median(flarr_norm)
+
+def convert_flux_torestframe(wl: np.array,fl: np.array,redshift:float=0.) -> tuple[np.array, np.array]:
+    """Transform the current flux into restframe
+
+    :param wl: wavelength
+    :type wl: np.array
+    :param fl: flux
+    :type fl: np.array
+    :param redshift: redshift of the object, defaults to 0
+    :type redshift: float, optional
+    :return: the spectrum blueshifted in restframe
+    :rtype: tuple[np.array, np.array]
+    """
+    factor = 1.+redshift
+    return wl/factor,fl*factor
+
+def convert_flux_toobsframe(wl: np.array,fl: np.array,redshift:float=0.) -> tuple[np.array, np.array] :
+    """convert flux to observed frame
+
+    :param wl: wavelength
+    :type wl: np.array
+    :param fl: flux
+    :type fl: np.array
+    :param redshift: redshift of the object, defaults to 0
+    :type redshift: int, optional
+    :return: the spectrum redshifted
+    :rtype: tuple[np.array, np.array]
+    """
+    factor = 1.+redshift
+    return wl*factor,fl/factor
+
 
 
 
@@ -140,11 +213,15 @@ class Fors2DataAcess():
         self.hf.close()
 
     def get_list_of_groupkeys(self):
-        """Provides the list of fors2 spectra identifiers
+        """Provides the list of fors2 spectra identifiers sorted
         :return: return list of keys of the h5 file where each key match a Fors2 spectrum tag id
         :rtype: list of str
         """
-        return self.list_of_groupkeys
+        list_of_specnames = self.list_of_groupkeys
+        nums = np.array([int(re.findall("^SPEC(.*)",name)[0])  for name in list_of_specnames])
+        indexes_sorted = np.argsort(nums)
+        names_sorted = np.array(list_of_specnames)[indexes_sorted]
+        return names_sorted
 
     def get_list_subgroup_keys(self):
         """Provide the list of parameters linked to the fors2 spectrum,
@@ -200,10 +277,9 @@ class Fors2DataAcess():
             print(f'getspectrum_fromgroup : No group {groupname}')
         return spec_dict
 
-    #kernel = kernels.RBF(0.5, (8000, 10000.0))
-    #gp = GaussianProcessRegressor(kernel=kernel ,random_state=0)
 
-    def getspectrumcleanedemissionlines_fromgroup(self,groupname:str,gp:GaussianProcessRegressor,nsigs:float=8.) ->dict:
+
+    def getspectrumcleanedemissionlines_fromgroup(self,groupname:str,gp:GaussianProcessRegressor=gpr,nsigs:float=8.) ->dict:
         """Clean the spectrum from any emission line or any defects i the spectrum
 
         :param groupname: identifier tag name of the spectrum
@@ -251,6 +327,220 @@ class Fors2DataAcess():
             print(f'getspectrum_fromgroup : No group {groupname}')
         return spec_dict
 
+    def plot_spectro_photom_noscaling(self,specname:str,ax=None,figsize=(12,6)) -> None:
+        """plot spectrometry and photometry
+
+        :param specname: name of the spectrum ex: 'SPEC100'
+        :type specname: str
+        :param ax: _description_, defaults to None
+        :type ax: _type_, optional
+        :param figsize: figure size, defaults to (12,6)
+        :type figsize: tuple, optional
+        """
+
+        spec = self.getspectrumcleanedemissionlines_fromgroup(specname)
+        attrs = self.getattribdata_fromgroup(specname)
+        z_obs = attrs["redshift"]
+        title = specname + f" redshift = {z_obs:.3f}" + " spectrum Not rescaled"
+
+        mags = np.array([ attrs["fuv_mag"], attrs["nuv_mag"], attrs['MAG_GAAP_u'], attrs['MAG_GAAP_g'], attrs['MAG_GAAP_r'], attrs['MAG_GAAP_i'], attrs['MAG_GAAP_Z'], attrs['MAG_GAAP_Y'],
+            attrs['MAG_GAAP_J'], attrs['MAG_GAAP_H'],attrs['MAG_GAAP_Ks'] ])
+
+        magserr = np.array([ attrs["fuv_magerr"], attrs["nuv_magerr"], attrs['MAGERR_GAAP_u'], attrs['MAGERR_GAAP_g'], attrs['MAGERR_GAAP_r'], attrs['MAGERR_GAAP_i'], attrs['MAGERR_GAAP_Z'], attrs['MAGERR_GAAP_Y'],
+            attrs['MAGERR_GAAP_J'], attrs['MAGERR_GAAP_H'],attrs['MAGERR_GAAP_Ks'] ])
+
+        mfluxes = [ 10**(-0.4*m) for m in mags ]
+
+        mfluxeserr = []
+        for f,em in zip(mfluxes,magserr):
+            ferr = 0.4*np.log(10)*em*f
+            mfluxeserr.append(ferr)
+
+        mfluxes = np.array(mfluxes)
+        mfluxeserr = np.array(mfluxeserr)
+
+        #fluxes =  [ attrs["fuv_flux"], attrs["nuv_flux"], attrs['FLUX_GAAP_u'], attrs['FLUX_GAAP_g'], attrs['FLUX_GAAP_r'], attrs['FLUX_GAAP_i'], attrs['FLUX_GAAP_Z'], attrs['FLUX_GAAP_Y'],
+        #    attrs['FLUX_GAAP_J'], attrs['FLUX_GAAP_H'],attrs['FLUX_GAAP_Ks'] ]
+
+        #fluxeserr =  [ attrs["fuv_fluxerr"], attrs["nuv_fluxerr"], attrs['FLUXERR_GAAP_u'], attrs['FLUXERR_GAAP_g'], attrs['FLUXERR_GAAP_r'], attrs['FLUXERR_GAAP_i'], attrs['FLUXERR_GAAP_Z'], attrs['FLUX_GAAP_Y'],
+        #    attrs['FLUXERR_GAAP_J'], attrs['FLUXERR_GAAP_H'],attrs['FLUXERR_GAAP_Ks'] ]
+
+        if ax is None:
+            _, ax =plt.subplots(1,1,figsize=figsize)
+
+        # plot the spectrum
+        X = spec["wl"]
+        Y = spec["fnu"]
+        ax.plot(X,Y,'-',color="b")
+
+        # show the faussian process fitted
+        gpr.fit(X[:, None], Y)
+        xfit = np.linspace(X.min(),X.max())
+        yfit, yfit_err = gpr.predict(xfit[:, None], return_std=True)
+        ax.plot(xfit, yfit, '-', color='cyan')
+        ax.fill_between(xfit, yfit -  yfit_err, yfit +  yfit_err, color='gray', alpha=0.3)
+
+
+        ax.set_xlabel("$\lambda (\\AA)$")
+        ylabel = "$f_\\nu$ (a.u)"
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+        ax.grid()
+
+        # plot the photpmetry
+        ax2 =ax.twinx()
+        ax2.errorbar(PHOTWL,mfluxes,yerr=mfluxeserr,fmt='o',color="r",ecolor="r",ms=7,label='Galex (UV) + Kids (optics) + VISTA')
+        ax2.set_ylabel("maggies")
+        plot_filter_tag(ax2,mfluxes)
+        plt.show()
+
+    def plot_spectro_photom_rescaling(self,specname:str,ax=None,figsize=(12,6)) -> None:
+        """plot spectrometry and photometry with rescaling spec
+
+        :param specname: name of the spectrum ex: 'SPEC100'
+        :type specname: str
+        :param ax: _description_, defaults to None
+        :type ax: _type_, optional
+        :param figsize: figure size, defaults to (12,6)
+        :type figsize: tuple, optional
+        """
+
+        spec = self.getspectrumcleanedemissionlines_fromgroup(specname)
+        attrs = self.getattribdata_fromgroup(specname)
+        z_obs = attrs["redshift"]
+        title = specname + f" redshift = {z_obs:.3f}" + " spectrum rescaled"
+
+        mags = np.array([ attrs["fuv_mag"], attrs["nuv_mag"], attrs['MAG_GAAP_u'], attrs['MAG_GAAP_g'], attrs['MAG_GAAP_r'], attrs['MAG_GAAP_i'], attrs['MAG_GAAP_Z'], attrs['MAG_GAAP_Y'],
+            attrs['MAG_GAAP_J'], attrs['MAG_GAAP_H'],attrs['MAG_GAAP_Ks'] ])
+
+        magserr = np.array([ attrs["fuv_magerr"], attrs["nuv_magerr"], attrs['MAGERR_GAAP_u'], attrs['MAGERR_GAAP_g'], attrs['MAGERR_GAAP_r'], attrs['MAGERR_GAAP_i'], attrs['MAGERR_GAAP_Z'], attrs['MAGERR_GAAP_Y'],
+            attrs['MAGERR_GAAP_J'], attrs['MAGERR_GAAP_H'],attrs['MAGERR_GAAP_Ks'] ])
+
+        mfluxes = [ 10**(-0.4*m) for m in mags ]
+
+        mfluxeserr = []
+        for f,em in zip(mfluxes,magserr):
+            ferr = 0.4*np.log(10)*em*f
+            mfluxeserr.append(ferr)
+
+        mfluxes = np.array(mfluxes)
+        mfluxeserr = np.array(mfluxeserr)
+
+
+        if ax is None:
+            _, ax =plt.subplots(1,1,figsize=figsize)
+
+        # plot the spectrum
+        Xspec = spec["wl"]
+        Yspec = spec["fnu"]
+
+        # show the faussian process fitted
+        try:
+            gpr.fit(Xspec[:, None], Yspec)
+            xfit = np.linspace(Xspec.min(),Xspec.max())
+            yfit, yfit_err = gpr.predict(xfit[:, None], return_std=True)
+
+            photom_wl_inrange_indexes = np.where(np.logical_and(PHOTWL>Xspec.min(),PHOTWL<Xspec.max()))[0]
+
+            Xphot = PHOTWL[photom_wl_inrange_indexes]
+            Yphot = mfluxes[photom_wl_inrange_indexes]
+
+            yfit_photom = gpr.predict(Xphot[:, None], return_std=False)
+
+            # scaling factor is flux-photom/flux-spec
+            scaling_factor = np.mean(Yphot/yfit_photom)
+
+            # correct spectrum
+            Yspec *= scaling_factor
+
+            # correcte fitted gaussian
+            yfit *= scaling_factor
+            yfit_err *= scaling_factor
+
+            ax.plot(Xspec,Yspec,'-',color="b")
+            ax.plot(xfit, yfit, '-', color='cyan')
+            ax.fill_between(xfit, yfit -  yfit_err, yfit +  yfit_err, color='gray', alpha=0.3)
+        except Exception as e:
+            scaling_factor = 0.0
+            print(e)
+
+
+
+        ax.set_xlabel("$\lambda (\\AA)$")
+        ylabel = "$f_\\nu$ (a.u)"
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+        ax.grid()
+
+        # plot the photpmetry
+        ax.errorbar(PHOTWL,mfluxes,yerr=mfluxeserr,fmt='o',color="r",ecolor="r",ms=7,label='Galex (UV) + Kids (optics) + VISTA')
+        ax.set_ylabel("maggies")
+        plot_filter_tag(ax,mfluxes)
+
+        if scaling_factor !=0:
+            all_y = np.concatenate([Yspec,mfluxes[2:]])
+        else:
+            all_y = mfluxes[2:]
+
+
+        ymax = np.max(all_y)
+
+        if ymax>0:
+            ax.set_ylim(0.,ymax)
+
+        plt.show()
+
+
+    def plot_allspectra(self,ax = None, figsize=(12,6),ylim=(1e-1,1e2),mode="fl",frame="obs"):
+        """plot all fors2 spectra
+
+        :param ax: matplotlib axe, defaults to None
+        :type ax: ax, optional
+        :param figsize: figure size, defaults to (12,6)
+        :type figsize: tuple, optional
+        :param mode: specify if want flambda (fl) or fnu
+        :type mode: str, optional
+        :param frame: rest frame or obs frame
+        :param frame: str, optional
+        :param ylim: tuple for y boundary figure vertical scale
+        :type ylim: tuple of 2 floats
+        """
+
+        if ax is None:
+            _, ax =plt.subplots(1,1,figsize=figsize)
+
+        fors2_tags = self.get_list_of_groupkeys()
+
+        for tag in fors2_tags:
+            spec = self.getspectrum_fromgroup(tag)
+
+            if frame == "obs":
+                title = "Fors2 spectra in obs frame"
+                if mode == "fl":
+                    x,y = spec["wl"],spec["fl"]
+                    ylabel = "$f_\\lambda$ (a.u)"
+                else:
+                    x,y= spec["wl"],spec["fnu"]
+                    ylabel = "$f_\nu$ (a.u)"
+            else:
+                title = "Fors2 spectra in rest frame"
+                if mode == "fl":
+                    x,y = convert_flux_torestframe(spec["wl"],spec["fl"])
+                    ylabel = "$f_\\lambda$ (a.u)"
+                else:
+                    x,y = convert_flux_torestframe(spec["wl"],spec["fnu"])
+                    ylabel = "$f_\nu$ (a.u)"
+            ax.plot(x,y)
+
+
+        ax.set_yscale("log")
+        ax.set_ylim(ylim)
+        ax.set_ylabel(ylabel)
+        ax.set_xlabel("$\lambda (\\AA)$")
+        ax.set_title(title)
+        ax.grid()
+
+        plt.show()
 
 class SLDataAcess():
     """Handle Access to starlight spectra
@@ -283,12 +573,16 @@ class SLDataAcess():
         self.hf.close()
 
     def get_list_of_groupkeys(self) -> list:
-        """Get list of StarLight spectrum tag names
+        """Get list of StarLight spectrum tag names sorted
 
         :return: The list of available StarLight spectrum tag names
         :rtype: list
         """
-        return self.list_of_groupkeys
+        list_of_specnames = self.list_of_groupkeys
+        nums = np.array([int(re.findall("^SPEC(.*)",name)[0])  for name in list_of_specnames])
+        indexes_sorted = np.argsort(nums)
+        names_sorted = np.array(list_of_specnames)[indexes_sorted]
+        return names_sorted
 
 
     def get_list_subgroup_keys(self) ->list:
@@ -342,4 +636,50 @@ class SLDataAcess():
         else:
             print(f'getspectrum_fromgroup : No group {groupname}')
         return spec_dict
+
+    def plot_allspectra(self,ax = None, figsize=(12,6),xlim=(0.,2e4),ylim=(1e-6,1e-3),mode="fl"):
+        """plt all starlight spectra
+
+        :param ax: axe, defaults to None
+        :type ax: ax, optional
+        :param figsize: size of the figure, defaults to (12,6)
+        :type figsize: tuple, optional
+        :param xlim: tuple for x boundary figure horizontal scale
+        :type xlim: tuple of 2 floats
+        :param ylim: tuple for y boundary figure vertical scale
+        :type ylim: tuple of 2 floats
+        :param mode: choose the type of flux, defaults to "fl" or "fnu"
+        :type mode: str, optional
+        """
+
+        if ax is None:
+            _, ax =plt.subplots(1,1,figsize=figsize)
+
+        sl_tags = self.get_list_of_groupkeys()
+
+        for tag in sl_tags:
+            spec = self.getspectrum_fromgroup(tag)
+
+
+            title = "StarLight spectra (rest frame)"
+            if mode == "fl":
+                x,y = spec["wl"],spec["fl"]
+                ylabel = "$f_\\lambda$ (a.u)"
+            else:
+                x,y= spec["wl"],spec["fnu"]
+                ylabel = "$f_\nu$ (a.u)"
+
+            ax.plot(x,y)
+
+        ax.set_yscale("log")
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        ax.set_xlabel("$\lambda (\\AA)$")
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+        ax.grid()
+
+        plt.show()
+
+
 
