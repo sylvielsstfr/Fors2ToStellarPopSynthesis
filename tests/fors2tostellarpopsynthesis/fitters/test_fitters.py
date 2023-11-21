@@ -39,6 +39,9 @@ class TestPathsAndFilesCase(unittest.TestCase):
 
     def test_sspfile(self):
         """Test if ssp file exists
+        The file must be downloaded from 
+        https://portal.nersc.gov/project/hacc/aphearin/DSPS_data/
+        please refer to https://dsps.readthedocs.io/en/latest/quickstart.html
         """
 
         self.assertTrue(pl.Path(FULLFILENAME_SSP_DATA).is_file())
