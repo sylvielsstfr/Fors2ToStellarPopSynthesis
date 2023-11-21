@@ -7,6 +7,7 @@
 # pylint: disable=invalid-name
 # pylint: disable=unused-import
 # pylint: disable=anomalous-backslash-in-string
+# pylint: disable=too-many-locals
 
 import os
 import re
@@ -364,24 +365,103 @@ class Fors2DataAcess():
 
         if ax is None:
             _, ax =plt.subplots(1,1,figsize=figsize)
-        ax.plot(spec["wl"],spec["fnu"],'-',color="b")
+
+        # plot the spectrum
+        X = spec["wl"]
+        Y = spec["fnu"]
+        ax.plot(X,Y,'-',color="b")
+
+        # show the faussian process fitted
+        gpr.fit(X[:, None], Y)
+        xfit = np.linspace(X.min(),X.max())
+        yfit, yfit_err = gpr.predict(xfit[:, None], return_std=True)
+        ax.plot(xfit, yfit, '-', color='cyan')
+        ax.fill_between(xfit, yfit -  yfit_err, yfit +  yfit_err, color='gray', alpha=0.3)
+
+
         ax.set_xlabel("$\lambda (\\AA)$")
         ylabel = "$f_\\nu$ (a.u)"
         ax.set_ylabel(ylabel)
         ax.set_title(title)
         ax.grid()
 
-
+        # plot the photpmetry
         ax2 =ax.twinx()
         ax2.errorbar(PHOTWL,mfluxes,yerr=mfluxeserr,fmt='o',color="r",ecolor="r",ms=7,label='Galex (UV) + Kids (optics) + VISTA')
         ax2.set_ylabel("maggies")
-
-
         plot_filter_tag(ax2,mfluxes)
-
-
         plt.show()
 
+    def plot_spectro_photom_rescaling(self,specname:str,ax=None,figsize=(12,6)) -> None:
+        """plot spectrometry and photometry with rescaling spec
+
+        :param specname: name of the spectrum ex: 'SPEC100'
+        :type specname: str
+        :param ax: _description_, defaults to None
+        :type ax: _type_, optional
+        :param figsize: figure size, defaults to (12,6)
+        :type figsize: tuple, optional
+        """
+
+        spec = self.getspectrumcleanedemissionlines_fromgroup(specname)
+        attrs = self.getattribdata_fromgroup(specname)
+        z_obs = attrs["redshift"]
+        title = specname + f" redshift = {z_obs:.3f}" + "spectrum rescaled"
+
+        mags = np.array([ attrs["fuv_mag"], attrs["nuv_mag"], attrs['MAG_GAAP_u'], attrs['MAG_GAAP_g'], attrs['MAG_GAAP_r'], attrs['MAG_GAAP_i'], attrs['MAG_GAAP_Z'], attrs['MAG_GAAP_Y'],
+            attrs['MAG_GAAP_J'], attrs['MAG_GAAP_H'],attrs['MAG_GAAP_Ks'] ])
+
+        magserr = np.array([ attrs["fuv_magerr"], attrs["nuv_magerr"], attrs['MAGERR_GAAP_u'], attrs['MAGERR_GAAP_g'], attrs['MAGERR_GAAP_r'], attrs['MAGERR_GAAP_i'], attrs['MAGERR_GAAP_Z'], attrs['MAGERR_GAAP_Y'],
+            attrs['MAGERR_GAAP_J'], attrs['MAGERR_GAAP_H'],attrs['MAGERR_GAAP_Ks'] ])
+
+        mfluxes = [ 10**(-0.4*m) for m in mags ]
+
+        mfluxeserr = []
+        for f,em in zip(mfluxes,magserr):
+            ferr = 0.4*np.log(10)*em*f
+            mfluxeserr.append(ferr)
+
+        mfluxes = np.array(mfluxes)
+        mfluxeserr = np.array(mfluxeserr)
+
+
+        if ax is None:
+            _, ax =plt.subplots(1,1,figsize=figsize)
+
+        # plot the spectrum
+        Xspec = spec["wl"]
+        Yspec = spec["fnu"]
+
+        # show the faussian process fitted
+        gpr.fit(Xspec[:, None], Yspec)
+        xfit = np.linspace(Xspec.min(),Xspec.max())
+        yfit, yfit_err = gpr.predict(xfit[:, None], return_std=True)
+        ax.plot(xfit, yfit, '-', color='cyan')
+        ax.fill_between(xfit, yfit -  yfit_err, yfit +  yfit_err, color='gray', alpha=0.3)
+
+        photom_wl_inrange_indexes = np.where(np.logical_and(PHOTWL>Xspec.min(),PHOTWL<Xspec.max()))[0]
+
+        Xphot = PHOTWL[photom_wl_inrange_indexes]
+        Yphot = mfluxes[photom_wl_inrange_indexes]
+
+        yfit_photom = gpr.predict(Xphot[:, None], return_std=False)
+        scaling_factor = np.median(Yphot/yfit_photom)
+
+        Yspec = Yspec*scaling_factor
+
+        ax.plot(Xspec,Yspec,'-',color="b")
+
+        ax.set_xlabel("$\lambda (\\AA)$")
+        ylabel = "$f_\\nu$ (a.u)"
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+        ax.grid()
+
+        # plot the photpmetry
+        ax.errorbar(PHOTWL,mfluxes,yerr=mfluxeserr,fmt='o',color="r",ecolor="r",ms=7,label='Galex (UV) + Kids (optics) + VISTA')
+        ax.set_ylabel("maggies")
+        plot_filter_tag(ax,mfluxes)
+        plt.show()
 
 
     def plot_allspectra(self,ax = None, figsize=(12,6),ylim=(1e-1,1e2),mode="fl",frame="obs"):
