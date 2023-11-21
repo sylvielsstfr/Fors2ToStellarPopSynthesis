@@ -11,9 +11,7 @@ import unittest
 
 import numpy as np
 
-from fors2tostellarpopsynthesis.parameters import (INIT_PARAMS,
-                                                   PARAM_NAMES_FLAT,
-                                                   DICT_PARAMS_true)
+from fors2tostellarpopsynthesis.parameters import SSPParametersFit
 
 
 class ParametersTestCase(unittest.TestCase):
@@ -22,7 +20,8 @@ class ParametersTestCase(unittest.TestCase):
     def test_init_params(self):
         """Check the values of INIT_PARAMS
         """
-        self.assertTrue(np.allclose(INIT_PARAMS,
+        p = SSPParametersFit()
+        self.assertTrue(np.allclose(p.INIT_PARAMS,
                                     np.array([12.,0.05,2.5,1., 12.,
                                               -1.,1., -1.,2.,1.,
                                               -0.50725,-1.01773,-0.212307,
@@ -30,10 +29,11 @@ class ParametersTestCase(unittest.TestCase):
     def test_param_names_flat(self):
         """Check the values of the list PARAM_NAMES_FLAT
         """
-        self.assertSequenceEqual(PARAM_NAMES_FLAT,['MAH_lgmO','MAH_logtc',
+        p = SSPParametersFit()
+        self.assertSequenceEqual(p.PARAM_NAMES_FLAT,['MAH_lgmO','MAH_logtc',
                                                             'MAH_early_index','MAH_late_index',
                                                             'MS_lgmcrit','MS_lgy_at_mcrit','MS_indx_lo','MS_indx_hi','MS_tau_dep',
-                                                            'Q_lg_qt','Q_qlglgdt','Q_lg_drop','Q_lg_rejuv','AV','UV_BUMP_AMPL','PLAW_SLOPE','SCALEF'])
+                                                            'Q_lg_qt','Q_qlglgdt','Q_lg_drop','Q_lg_rejuv','AV','UV_BUMP','PLAW_SLOPE','SCALEF'])
 
 if __name__ == "__main__":
     unittest.main()
