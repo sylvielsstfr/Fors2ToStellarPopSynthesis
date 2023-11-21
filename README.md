@@ -17,6 +17,27 @@ you whether or not you'd like to display it!
 For more information about the project template see the 
 [documentation](https://lincc-ppt.readthedocs.io/en/latest/).
 
+
+## Introduction
+
+Package to fit spectroscopic data and photometric data
+on a Stellar Synthesis Population code [DSPS](https://dsps.readthedocs.io/en/latest/index.html).
+Please refer to the [scientific publication on DSPS](https://arxiv.org/abs/2112.06830).
+
+The purpose of this package is to provide a set of tools
+to fit SSP models on spectral data and photometric data.
+From the fitted models, a set Galaxies Spectral Templates
+may be extracted from those data such those could be used in SED template fitting for PhotoZ estimation codes.
+
+We apply this code to Fors2 Spectra combined with Photometric data from surveys [Galex](http://www.galex.caltech.edu/), [KIDS](https://kids.strw.leidenuniv.nl/) and [VISTA](https://www.eso.org/public/teles-instr/paranal-observatory/surveytelescopes/vista/surveys/).
+
+- the galex data are available through astro-query
+- KIDS-VISTA data from ESO User Portal at https://www.eso.org/sso
+- the photometric survey filters are obtained from [sedpy](https://github.com/bd-j/sedpy) 
+
+Notice to benefit from the implementation of DSPS in Jax, this package is also developped in JAX.
+
+
 ## Dev Guide - Getting Started
 
 Before installing any dependencies or writing code, it's a great idea to create a
