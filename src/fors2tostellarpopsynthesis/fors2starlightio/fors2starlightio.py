@@ -10,12 +10,14 @@
 # pylint: disable=too-many-locals
 # pylint: disable=broad-exception-caught
 # pylint: disable=too-many-statements
+# pylint: disable=trailing-whitespace
 
 import os
 import re
 from collections import OrderedDict
 
 import h5py
+import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy import constants as const
@@ -279,17 +281,12 @@ class Fors2DataAcess():
 
 
 
-    def getspectrumcleanedemissionlines_fromgroup(self,groupname:str,gp:GaussianProcessRegressor=gpr,nsigs:float=8.) ->dict:
+    def getspectrumcleanedemissionlines_fromgroup(self,groupname:str,nsigs:float=8.) ->dict:
         """Clean the spectrum from any emission line or any defects i the spectrum
 
         :param groupname: identifier tag name of the spectrum
         :type groupname: str
-        :param gp: The guassian process regerssor to be used
-        :type gp: GaussianProcessRegressor
-
-        kernel = kernels.RBF(0.5, (8000, 10000.0))
-        gp = GaussianProcessRegressor(kernel=kernel ,random_state=0)
-
+        
         :param nsigs: the number of std dev, defaults to 8.
         :type nsigs: float, optional
         :return: the spectrum cleaned
@@ -308,11 +305,14 @@ class Fors2DataAcess():
             # fit gaussian process
             X = wl
             Y = fnu/fnorm
+            gpr.fit(X[:, None], Y)
 
-            DeltaY,Z = Y - gp.predict(X[:, None], return_std=True)
-            background = np.sqrt(np.median(DeltaY**2))
+            Z = Y - gpr.predict(X[:, None], return_std=False)
+            DeltaY = np.abs(Z)
+            bkg = np.sqrt(np.median(DeltaY**2))
+            
             #indexes_toremove = np.where(np.abs(DeltaY)> nsigs * background)[0]
-            indexes_toremove = np.where(np.logical_or(np.abs(DeltaY)> nsigs * background,Y<=0))[0]
+            indexes_toremove = np.where(np.logical_or(DeltaY> nsigs * bkg,Y<=0))[0]
 
             Xclean = np.delete(X,indexes_toremove)
             Yclean  = np.delete(Y,indexes_toremove)
@@ -321,11 +321,56 @@ class Fors2DataAcess():
             spec_dict["wl"] = Xclean
             spec_dict["fnu"] = Yclean
             spec_dict["bg"] = np.abs(Zclean) # strange scikit learn bug returning negative std.
-            spec_dict["bg_med"] = background # overestimated median error
+            spec_dict["bg_med"] = bkg # overestimated median error
 
         else:
             print(f'getspectrum_fromgroup : No group {groupname}')
         return spec_dict
+    
+    def get_photmagnitudes(self,specname:str) -> tuple[np.array,np.array]:
+        """get magnitudes and errors from phtometric surveys
+
+        :param specname: spectrum name
+        :type specname: str
+        :return: magnitude and errors on magnitudes
+        :rtype: tuple[np.array,np.array]
+        """
+        attrs = self.getattribdata_fromgroup(specname)
+        
+        mags = np.array([ attrs["fuv_mag"], attrs["nuv_mag"], attrs['MAG_GAAP_u'], attrs['MAG_GAAP_g'], attrs['MAG_GAAP_r'], attrs['MAG_GAAP_i'], attrs['MAG_GAAP_Z'], attrs['MAG_GAAP_Y'],
+            attrs['MAG_GAAP_J'], attrs['MAG_GAAP_H'],attrs['MAG_GAAP_Ks'] ])
+
+        magserr = np.array([ attrs["fuv_magerr"], attrs["nuv_magerr"], attrs['MAGERR_GAAP_u'], attrs['MAGERR_GAAP_g'], attrs['MAGERR_GAAP_r'], attrs['MAGERR_GAAP_i'], attrs['MAGERR_GAAP_Z'], attrs['MAGERR_GAAP_Y'],
+            attrs['MAGERR_GAAP_J'], attrs['MAGERR_GAAP_H'],attrs['MAGERR_GAAP_Ks'] ])
+        
+        return mags,magserr
+
+    def get_photfluxes(self,specname:str) -> tuple[np.array,np.array]:
+        """get fluxes and errors from photometric surveys
+
+        :param specname: spectrum name
+        :type specname: str
+        :return: magnitude and errors on magnitudes
+        :rtype: tuple[np.array,np.array]
+        """
+        attrs = self.getattribdata_fromgroup(specname)
+        
+        mags = np.array([ attrs["fuv_mag"], attrs["nuv_mag"], attrs['MAG_GAAP_u'], attrs['MAG_GAAP_g'], attrs['MAG_GAAP_r'], attrs['MAG_GAAP_i'], attrs['MAG_GAAP_Z'], attrs['MAG_GAAP_Y'],
+            attrs['MAG_GAAP_J'], attrs['MAG_GAAP_H'],attrs['MAG_GAAP_Ks'] ])
+
+        magserr = np.array([ attrs["fuv_magerr"], attrs["nuv_magerr"], attrs['MAGERR_GAAP_u'], attrs['MAGERR_GAAP_g'], attrs['MAGERR_GAAP_r'], attrs['MAGERR_GAAP_i'], attrs['MAGERR_GAAP_Z'], attrs['MAGERR_GAAP_Y'],
+            attrs['MAGERR_GAAP_J'], attrs['MAGERR_GAAP_H'],attrs['MAGERR_GAAP_Ks'] ])
+        
+        mfluxes = [ 10**(-0.4*m) for m in mags ]
+        mfluxeserr = []
+        for f,em in zip(mfluxes,magserr):
+            ferr = 0.4*np.log(10)*em*f
+            mfluxeserr.append(ferr)
+
+        mfluxes = np.array(mfluxes)
+        mfluxeserr = np.array(mfluxeserr)
+        return mfluxes,mfluxeserr
+
 
     def plot_spectro_photom_noscaling(self,specname:str,ax=None,figsize=(12,6)) -> None:
         """plot spectrometry and photometry
@@ -341,6 +386,10 @@ class Fors2DataAcess():
         spec = self.getspectrumcleanedemissionlines_fromgroup(specname)
         attrs = self.getattribdata_fromgroup(specname)
         z_obs = attrs["redshift"]
+        asep_galex = attrs['asep_galex'] 
+        asep_kids = attrs['asep_kids']
+        speclabel = f"specname : z={z_obs:.2f} sep = ({asep_galex:.3f}, {asep_kids:.3f}) arscec"
+
         title = specname + f" redshift = {z_obs:.3f}" + " spectrum Not rescaled"
 
         mags = np.array([ attrs["fuv_mag"], attrs["nuv_mag"], attrs['MAG_GAAP_u'], attrs['MAG_GAAP_g'], attrs['MAG_GAAP_r'], attrs['MAG_GAAP_i'], attrs['MAG_GAAP_Z'], attrs['MAG_GAAP_Y'],
@@ -371,9 +420,9 @@ class Fors2DataAcess():
         # plot the spectrum
         X = spec["wl"]
         Y = spec["fnu"]
-        ax.plot(X,Y,'-',color="b")
+        ax.plot(X,Y,'-',color="b",label=speclabel)
 
-        # show the faussian process fitted
+        # show the gaussian process fitted
         gpr.fit(X[:, None], Y)
         xfit = np.linspace(X.min(),X.max())
         yfit, yfit_err = gpr.predict(xfit[:, None], return_std=True)
@@ -386,6 +435,7 @@ class Fors2DataAcess():
         ax.set_ylabel(ylabel)
         ax.set_title(title)
         ax.grid()
+        ax.legend()
 
         # plot the photpmetry
         ax2 =ax.twinx()
@@ -408,6 +458,9 @@ class Fors2DataAcess():
         spec = self.getspectrumcleanedemissionlines_fromgroup(specname)
         attrs = self.getattribdata_fromgroup(specname)
         z_obs = attrs["redshift"]
+        asep_galex = attrs['asep_galex'] 
+        asep_kids = attrs['asep_kids']
+        speclabel = f"specname : z={z_obs:.2f} sep = ({asep_galex:.3f}, {asep_kids:.3f}) arscec"
         title = specname + f" redshift = {z_obs:.3f}" + " spectrum rescaled"
 
         mags = np.array([ attrs["fuv_mag"], attrs["nuv_mag"], attrs['MAG_GAAP_u'], attrs['MAG_GAAP_g'], attrs['MAG_GAAP_r'], attrs['MAG_GAAP_i'], attrs['MAG_GAAP_Z'], attrs['MAG_GAAP_Y'],
@@ -457,7 +510,7 @@ class Fors2DataAcess():
             yfit *= scaling_factor
             yfit_err *= scaling_factor
 
-            ax.plot(Xspec,Yspec,'-',color="b")
+            ax.plot(Xspec,Yspec,'-',color="b",label=speclabel)
             ax.plot(xfit, yfit, '-', color='cyan')
             ax.fill_between(xfit, yfit -  yfit_err, yfit +  yfit_err, color='gray', alpha=0.3)
         except Exception as e:
@@ -471,6 +524,7 @@ class Fors2DataAcess():
         ax.set_ylabel(ylabel)
         ax.set_title(title)
         ax.grid()
+        ax.legend()
 
         # plot the photpmetry
         ax.errorbar(PHOTWL,mfluxes,yerr=mfluxeserr,fmt='o',color="r",ecolor="r",ms=7,label='Galex (UV) + Kids (optics) + VISTA')

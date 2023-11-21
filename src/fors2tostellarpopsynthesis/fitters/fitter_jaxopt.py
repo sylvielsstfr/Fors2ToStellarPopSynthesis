@@ -80,9 +80,9 @@ def mean_spectrum(wls, params,z_obs):
     Q_lg_rejuv = params["Q_lg_rejuv"]
     list_param_q = [Q_lg_qt, Q_qlglgdt,Q_lg_drop,Q_lg_rejuv]
 
-    Av = params["Av"]
-    uv_bump = params["uv_bump"]
-    plaw_slope = params["plaw_slope"]
+    Av = params["AV"]
+    uv_bump = params["UV_BUMP"]
+    plaw_slope = params["PLAW_SLOPE"]
     list_param_dust = [Av,uv_bump,plaw_slope]
 
     # compute SFR
@@ -139,6 +139,8 @@ def mean_mags(X, params,z_obs):
     :param params: Model parameters
     :type params: Dictionnary of parameters
 
+    :param z_obs: redshift of the observations
+    :type z_obs: float
 
     :return: array the magnitude for the SED spectrum model
     :rtype: float
@@ -165,9 +167,9 @@ def mean_mags(X, params,z_obs):
     Q_lg_rejuv = params["Q_lg_rejuv"]
     list_param_q = [Q_lg_qt, Q_qlglgdt,Q_lg_drop,Q_lg_rejuv]
 
-    Av = params["Av"]
-    uv_bump = params["uv_bump"]
-    plaw_slope = params["plaw_slope"]
+    Av = params["AV"]
+    uv_bump = params["UV_BUMP"]
+    plaw_slope = params["PLAW_SLOPE"]
     list_param_dust = [Av,uv_bump,plaw_slope]
 
     # compute SFR
@@ -226,6 +228,9 @@ def mean_sfr(params,z_obs):
     :param params: Fitted parameter dictionnary
     :type params: float as a dictionnary
 
+    :param z_obs: redshift of the observations
+    :type z_obs: float
+
     :return: array of the star formation rate
     :rtype: float
 
@@ -251,9 +256,9 @@ def mean_sfr(params,z_obs):
     Q_lg_rejuv = params["Q_lg_rejuv"]
     list_param_q = [Q_lg_qt, Q_qlglgdt,Q_lg_drop,Q_lg_rejuv]
 
-    Av = params["Av"]
-    uv_bump = params["uv_bump"]
-    plaw_slope = params["plaw_slope"]
+    Av = params["AV"]
+    uv_bump = params["UV_BUMP"]
+    plaw_slope = params["PLAW_SLOPE"]
     list_param_dust = [Av,uv_bump,plaw_slope]
 
 
@@ -277,9 +282,15 @@ def mean_sfr(params,z_obs):
     return tarr,sfh_gal
 
 @jit
-def lik_spec(p,wls,F, sigma_obs,z_obs):
+def lik_spec(p,wls,F, sigma_obs,z_obs) -> float:
     """
     neg loglikelihood(parameters,x,y,sigmas) for the spectrum
+
+    :param p: flat array of parameters to fit
+    :param z_obs: redshift of the observations
+    :type z_obs: float
+    :return: the chi2 value
+    :rtype: float
     """
 
     params = {"MAH_lgmO":p[0],
@@ -298,12 +309,12 @@ def lik_spec(p,wls,F, sigma_obs,z_obs):
               "Q_lg_drop":p[11],
               "Q_lg_rejuv":p[12],
 
-              "Av":p[13],
-              "uv_bump":p[14],
-              "plaw_slope":p[15],
-              "scaleF":p[16]
+              "AV":p[13],
+              "UV_BUMP":p[14],
+              "PLAW_SLOPE":p[15],
+              "SCALEF":p[16]
              }
-    scaleF =  params["scaleF"]
+    scaleF =  params["SCALEF"]
     # residuals
     resid = mean_spectrum(wls, params,z_obs) - F*scaleF
 
@@ -332,12 +343,12 @@ def lik_mag(p,xf,mags_measured, sigma_mag_obs,z_obs):
               "Q_lg_drop":p[11],
               "Q_lg_rejuv":p[12],
 
-              "Av":p[13],
-              "uv_bump":p[14],
-              "plaw_slope":p[15],
-              "scaleF":p[16]
+              "AV":p[13],
+              "UV_BUMP":p[14],
+              "PLAW_SLOPE":p[15],
+              "SCALEF":p[16]
              }
-    #scaleF =  params["scaleF"]
+    #scaleF =  params["SCALEF"]
 
     all_mags_redictions = mean_mags(xf, params,z_obs)
     resid = mags_measured - all_mags_redictions
@@ -363,7 +374,7 @@ def lik_comb(p,xc,datac, sigmac, z_obs,weight= 0.5):
     return weight*resid_spec + (1-weight)*resid_phot
 
 
-def get_infos_spec(res, model, wls,F, eF):
+def get_infos_spec(res, model, wls,F, eF, z_obs):
     """_summary_
 
     :param res: _description_
@@ -380,14 +391,14 @@ def get_infos_spec(res, model, wls,F, eF):
     :rtype: _type_
     """
     params    = res.params
-    fun_min   = model(params,wls,F,eF)
-    jacob_min =jax.jacfwd(model)(params, wls,F,eF)
+    fun_min   = model(params,wls,F,eF,z_obs)
+    jacob_min =jax.jacfwd(model)(params, wls,F,eF,z_obs)
     #covariance matrix of parameters
-    inv_hessian_min =jax.scipy.linalg.inv(jax.hessian(model)(params, wls,F,eF))
+    inv_hessian_min =jax.scipy.linalg.inv(jax.hessian(model)(params, wls,F,eF,z_obs))
     return params,fun_min,jacob_min,inv_hessian_min
 
 
-def get_infos_mag(res, model, xf, mgs, mgse):
+def get_infos_mag(res, model, xf, mgs, mgse,z_obs):
     """_summary_
 
     :param res: _description_
@@ -404,14 +415,14 @@ def get_infos_mag(res, model, xf, mgs, mgse):
     :rtype: _type_
     """
     params    = res.params
-    fun_min   = model(params,xf,mgs,mgse)
-    jacob_min =jax.jacfwd(model)(params, xf, mgs, mgse)
+    fun_min   = model(params,xf,mgs,mgse,z_obs)
+    jacob_min =jax.jacfwd(model)(params, xf, mgs, mgse,z_obs)
     #covariance matrix of parameters
-    inv_hessian_min =jax.scipy.linalg.inv(jax.hessian(model)(params, xf, mgs , mgse))
+    inv_hessian_min =jax.scipy.linalg.inv(jax.hessian(model)(params, xf, mgs , mgse,z_obs))
     return params,fun_min,jacob_min,inv_hessian_min
 
 
-def get_infos_comb(res, model, xc, datac, sigmac,weight):
+def get_infos_comb(res, model, xc, datac, sigmac,z_obs,weight):
     """_summary_
 
     :param res: _description_
@@ -430,10 +441,10 @@ def get_infos_comb(res, model, xc, datac, sigmac,weight):
     :rtype: _type_
     """
     params    = res.params
-    fun_min   = model(params,xc,datac,sigmac,weight=weight)
-    jacob_min =jax.jacfwd(model)(params, xc,datac,sigmac,weight=weight)
+    fun_min   = model(params,xc,datac,sigmac,z_obs,weight=weight)
+    jacob_min =jax.jacfwd(model)(params, xc,datac,sigmac,z_obs,weight=weight)
     #covariance matrix of parameters
-    inv_hessian_min =jax.scipy.linalg.inv(jax.hessian(model)(params,xc,datac,sigmac,weight=weight))
+    inv_hessian_min =jax.scipy.linalg.inv(jax.hessian(model)(params,xc,datac,sigmac,z_obs,weight=weight))
     return params,fun_min,jacob_min,inv_hessian_min
 
 

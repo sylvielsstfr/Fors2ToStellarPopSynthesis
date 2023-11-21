@@ -5,6 +5,7 @@
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-few-public-methods
 # pylint: disable=line-too-long
+# pylint: disable=W1309
 
 import itertools
 from collections import OrderedDict
@@ -201,4 +202,12 @@ class SSPParametersFit():
         self.DICT_PARAMS_true.update(self.DICT_PARAM_DUST_true)
         self.DICT_PARAMS_true.update(self.DICT_PARAM_SCALEF_true)
 
+    def __repr__(self) -> str:
+        all_str = []
+        all_str.append(f"Class SSPParametersFit : ")
+        all_str.append(" - Name     : " + str(self.PARAM_NAMES_FLAT))
+        all_str.append(" - Mean Val : " + str(self.INIT_PARAMS))
+        all_str.append(" - Min Val  : " + str(self.PARAMS_MIN))
+        all_str.append(" - Max Val  : " + str(self.PARAMS_MAX))
 
+        return "\n".join(all_str)
