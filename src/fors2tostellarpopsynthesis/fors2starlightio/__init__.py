@@ -4,7 +4,7 @@ from .fors2starlightio import (FILENAME_FORS2PHOTOM, FILENAME_STARLIGHT,
                                SLDataAcess, _getPackageDir,
                                convert_flux_toobsframe,
                                convert_flux_torestframe, convertflambda_to_fnu,
-                               flux_norm, ordered_keys)
+                               flux_norm, gpr, kernel, ordered_keys)
 
 __all__ = ["_getPackageDir",
            "FILENAME_FORS2PHOTOM",
@@ -17,4 +17,4 @@ __all__ = ["_getPackageDir",
            "Fors2DataAcess",
            "SLDataAcess",
            "convert_flux_torestframe",
-           "convert_flux_toobsframe"]
+           "convert_flux_toobsframe","kernel","gpr"]

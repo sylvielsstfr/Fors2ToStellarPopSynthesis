@@ -6,9 +6,9 @@
 
 import os
 import sys
+from importlib.metadata import version
 
 import autoapi
-from importlib.metadata import version
 
 # Define path to the code to be documented **relative to where conf.py (this file) is kept**
 sys.path.insert(0, os.path.abspath('../src/'))
@@ -30,6 +30,10 @@ extensions = ["sphinx.ext.mathjax", "sphinx.ext.napoleon", "sphinx.ext.viewcode"
 
 extensions.append("autoapi.extension")
 extensions.append("nbsphinx")
+
+# because of errors with nan in gpr estimator in 
+# notebooks/fors2starlightio/ViewAllFors2OneSpec_rescaling.ipynb
+nbsphinx_allow_errors = True
 
 templates_path = []
 exclude_patterns = ['_build', '**.ipynb_checkpoints']
