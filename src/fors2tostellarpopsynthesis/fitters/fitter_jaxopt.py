@@ -44,8 +44,81 @@ TODAY_GYR = 13.8
 
 
 @jit
+def ssp_spectrum_fromparam(params,z_obs):
+    """ Return the SED of SSP DSPS with original wavelength range wihout and with dust
+
+    :param params: parameters for the fit
+    :type params: dictionnary of parameters
+
+    :param z_obs: redshift at which the model SSP should be calculated
+    :type z_obs: float
+
+    :return: the wavelength and the spectrum with dust and no dust
+    :rtype: float
+
+    """
+
+    # decode the parameters
+    MAH_lgmO = params["MAH_lgmO"]
+    MAH_logtc = params["MAH_logtc"]
+    MAH_early_index = params["MAH_early_index"]
+    MAH_late_index = params["MAH_late_index"]
+    list_param_mah = [MAH_lgmO,MAH_logtc,MAH_early_index,MAH_late_index]
+
+    MS_lgmcrit = params["MS_lgmcrit"]
+    MS_lgy_at_mcrit = params["MS_lgy_at_mcrit"]
+    MS_indx_lo = params["MS_indx_lo"]
+    MS_indx_hi = params["MS_indx_hi"]
+    MS_tau_dep = params["MS_tau_dep"]
+    list_param_ms = [MS_lgmcrit,MS_lgy_at_mcrit,MS_indx_lo,MS_indx_hi,MS_tau_dep]
+
+    Q_lg_qt = params["Q_lg_qt"]
+    Q_qlglgdt = params["Q_qlglgdt"]
+    Q_lg_drop = params["Q_lg_drop"]
+    Q_lg_rejuv = params["Q_lg_rejuv"]
+    list_param_q = [Q_lg_qt, Q_qlglgdt,Q_lg_drop,Q_lg_rejuv]
+
+    Av = params["AV"]
+    uv_bump = params["UV_BUMP"]
+    plaw_slope = params["PLAW_SLOPE"]
+    list_param_dust = [Av,uv_bump,plaw_slope]
+
+    # compute SFR
+    tarr = np.linspace(0.1, TODAY_GYR, 100)
+    sfh_gal = sfh_singlegal(
+    tarr, list_param_mah , list_param_ms, list_param_q)
+
+    # metallicity
+    gal_lgmet = -2.0 # log10(Z)
+    gal_lgmet_scatter = 0.2 # lognormal scatter in the metallicity distribution function
+
+    # need age of universe when the light was emitted
+    t_obs = age_at_z(z_obs, *DEFAULT_COSMOLOGY) # age of the universe in Gyr at z_obs
+    t_obs = t_obs[0] # age_at_z function returns an array, but SED functions accept a float for this argument
+
+    # clear sfh in future
+    sfh_gal = jnp.where(tarr<t_obs, sfh_gal, 0)
+
+    # compute the SED_info object
+    gal_t_table = tarr
+    gal_sfr_table = sfh_gal
+    sed_info = calc_rest_sed_sfh_table_lognormal_mdf(
+    gal_t_table, gal_sfr_table, gal_lgmet, gal_lgmet_scatter,
+    SSP_DATA.ssp_lgmet, SSP_DATA.ssp_lg_age_gyr, SSP_DATA.ssp_flux, t_obs)
+
+    # compute dust attenuation
+    wave_spec_micron = SSP_DATA.ssp_wave/10_000
+    k = sbl18_k_lambda(wave_spec_micron,uv_bump,plaw_slope)
+    dsps_flux_ratio = _frac_transmission_from_k_lambda(k,Av)
+
+    sed_attenuated = dsps_flux_ratio * sed_info.rest_sed
+
+    return SSP_DATA.ssp_wave, sed_info.rest_sed, sed_attenuated
+
+
+@jit
 def mean_spectrum(wls, params,z_obs):
-    """ Model of spectrum
+    """ Return the Model of SSP spectrum including Dust at the wavelength wls
 
     :param wls: wavelengths of the spectrum in rest frame
     :type wls: float
@@ -117,8 +190,6 @@ def mean_spectrum(wls, params,z_obs):
 
     # interpolate with interpax which is differentiable
     #Fobs = jnp.interp(wls, ssp_data.ssp_wave, sed_attenuated)
-
-
     Fobs = interp1d(wls, SSP_DATA.ssp_wave, sed_attenuated,method='cubic')
 
     return Fobs
