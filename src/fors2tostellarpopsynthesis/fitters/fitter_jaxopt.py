@@ -200,9 +200,8 @@ def mean_spectrum(wls, params,z_obs):
 
 @jit
 def mean_mags(X, params,z_obs):
-    """ Model of photometry
-
-    Compute the magnitudes in Filters
+    """ Return the photometric magnitudes for the given filters transmission
+    in X : predict the magnitudes in Filters
 
     :param X: List of to be used (Galex, sdss, vircam)
     :type X: a list of tuples of two arrays (one array with wavelength and one array of corresponding transmission)
@@ -213,7 +212,7 @@ def mean_mags(X, params,z_obs):
     :param z_obs: redshift of the observations
     :type z_obs: float
 
-    :return: array the magnitude for the SED spectrum model
+    :return: array the predicted magnitude for the SED spectrum model represented by its parameters.
     :rtype: float
 
     """
