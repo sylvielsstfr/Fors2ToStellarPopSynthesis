@@ -185,6 +185,7 @@ def plot_fit_ssp_photometry(params,wls,mags,errmags,z_obs,subtit,ax=None):
     __= ax.set_ylim(ylim_min ,ylim_max )
 
     ax.grid()
+    plt.show()
 
 
 def plot_fit_ssp_spectroscopy(params,Xspec_data_rest,Yspec_data_rest,EYspec_data_rest,z_obs,subtit,ax=None):
@@ -243,6 +244,7 @@ def plot_fit_ssp_spectroscopy(params,Xspec_data_rest,Yspec_data_rest,EYspec_data
     __= ax.set_ylim(ylim_min,ylim_max)
 
     ax.grid()
+    plt.show()
 
 
 
@@ -316,6 +318,7 @@ def plot_fit_ssp_spectrophotometry(params,Xspec_data_rest,Yspec_data_rest,EYspec
     __= ax.set_ylim(ylim_min,ylim_max)
 
     ax.grid()
+    plt.show()
 
 
 def plot_fit_ssp_spectrophotometry_sl(params,Xspec_data_rest,Yspec_data_rest,EYspec_data_rest,
@@ -390,6 +393,7 @@ def plot_fit_ssp_spectrophotometry_sl(params,Xspec_data_rest,Yspec_data_rest,EYs
     ax.set_ylabel("$L_\\nu(\lambda)$ - (AB unit - maggies)")
 
     ax.grid()
+    plt.show()
 
 
 def plot_SFH(params,z_obs,subtit,ax=None):
@@ -427,3 +431,4 @@ def plot_SFH(params,z_obs,subtit,ax=None):
     ylabel = ax.set_ylabel(r'${\rm SFR\ [M_{\odot}/yr]}$')
     ax.grid()
     #ax.legend()
+    plt.show()
