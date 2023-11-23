@@ -1,6 +1,6 @@
 """Module providing SPS fit utilities with jaxopt
 Please note that data files from DSPS must be donwloaded in data folder:
-The file must be downloaded from 
+The file must be downloaded from
 https://portal.nersc.gov/project/hacc/aphearin/DSPS_data/
 refer to https://dsps.readthedocs.io/en/latest/quickstart.html
 """
