@@ -300,7 +300,15 @@ def plot_fit_ssp_spectrophotometry(params,Xspec_data_rest,Yspec_data_rest,EYspec
 
     # plot photometric data
     label = "Photometry for " + subtit
-    xphot , yphot, eyphot = Xphot_data_rest,Yphot_data_rest,EYphot_data_rest
+    # need to rescale photometric data with dusty model
+    #.............................................................................
+     # calculate the scaling factor for photometric points
+    fluxphot_pred = interp1d(Xphot_data_rest,x,y_dust)
+    scaling_factor =  jnp.mean(fluxphot_pred/Yphot_data_rest)
+    xphot , yphot, eyphot =  Xphot_data_rest,Yphot_data_rest*scaling_factor,EYphot_data_rest*scaling_factor
+    #...............................................................................
+
+    #xphot , yphot, eyphot = Xphot_data_rest,Yphot_data_rest,EYphot_data_rest
     ax.errorbar( xphot , yphot, yerr=eyphot, marker='o', color="black",ecolor="black",markersize=8,lw=2,label=label)
 
     title = "SED $L_\\nu$ with/wo dust spectroscopy and photometry combined (rest frame)"
@@ -376,7 +384,14 @@ def plot_fit_ssp_spectrophotometry_sl(params,Xspec_data_rest,Yspec_data_rest,EYs
 
     # plot Photometric data in restframe
     label = "Photometry for " + subtit
-    xphot , yphot, eyphot = Xphot_data_rest,Yphot_data_rest,EYphot_data_rest
+    #xphot , yphot, eyphot = Xphot_data_rest,Yphot_data_rest,EYphot_data_rest
+    #.............................................................................
+     # calculate the scaling factor for photometric points
+    fluxphot_pred = interp1d(Xphot_data_rest,x,y_dust)
+    scaling_factor =  jnp.mean(fluxphot_pred/Yphot_data_rest)
+    xphot , yphot, eyphot =  Xphot_data_rest,Yphot_data_rest*scaling_factor,EYphot_data_rest*scaling_factor
+    #...............................................................................
+
     ax.errorbar( xphot , yphot, yerr=eyphot, marker='o', color="black",ecolor="black",markersize=8,lw=2,label=label)
 
     title = "SED $L_\\nu$ with/wo dust spectroscopy and photometry combined (rest frame)"
