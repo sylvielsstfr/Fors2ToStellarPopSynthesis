@@ -3,6 +3,7 @@
 # pylint: disable=invalid-name
 # pylint: disable=line-too-long
 # pylint: disable=trailing-newlines
+# pylint: disable=unused-import
 
 
 import pickle
@@ -66,7 +67,7 @@ if __name__ == '__main__':
     sl_tags = sl.get_list_of_groupkeys()
 
     # select the spectra
-    all_selected_spectrum_tags = fors2_tags[np.arange(105,107)]
+    all_selected_spectrum_tags = fors2_tags[np.arange(0,100)]
 
 
 
@@ -164,7 +165,7 @@ if __name__ == '__main__':
 
 
         # plot model with photometry
-        plot_fit_ssp_photometry(dict_params_m,list_wlmean_f_sel,data_selected_mags,data_selected_magserr,z_obs, subtit = title_spec ,ax=None)
+        #plot_fit_ssp_photometry(dict_params_m,list_wlmean_f_sel,data_selected_mags,data_selected_magserr,z_obs, subtit = title_spec ,ax=None)
 
         #rescale Fors2 spectroscopy
         Xspec_data_rest,Yspec_data_rest,EYspec_data_rest,factor = rescale_spectroscopy(dict_params_m,Xspec_data,Yspec_data,EYspec_data,z_obs)
@@ -180,7 +181,7 @@ if __name__ == '__main__':
         dict_params_s = paramslist_to_dict( params_s,p.PARAM_NAMES_FLAT)
 
         # plot fit for spectroscopy only
-        plot_fit_ssp_spectroscopy(dict_params_s,Xspec_data_rest,Yspec_data_rest,EYspec_data_rest,z_obs,subtit = title_spec)
+        #plot_fit_ssp_spectroscopy(dict_params_s,Xspec_data_rest,Yspec_data_rest,EYspec_data_rest,z_obs,subtit = title_spec)
 
 
         # combining spectro and photometry
@@ -220,7 +221,7 @@ if __name__ == '__main__':
         dict_out.update(dict_params_c)
 
         # plot the combined fit
-        plot_fit_ssp_spectrophotometry(dict_params_c ,Xspec_data_rest,Yspec_data_rest,EYspec_data_rest,xphot_rest,yphot_rest,eyphot_rest,z_obs=z_obs,subtit = title_spec )
+        #plot_fit_ssp_spectrophotometry(dict_params_c ,Xspec_data_rest,Yspec_data_rest,EYspec_data_rest,xphot_rest,yphot_rest,eyphot_rest,z_obs=z_obs,subtit = title_spec )
 
         #load starlight spectrum
         dict_sl = sl.getspectrum_fromgroup(selected_spectrum_tag)
@@ -231,13 +232,15 @@ if __name__ == '__main__':
         plot_fit_ssp_spectrophotometry_sl(dict_params_c ,Xspec_data_rest,Yspec_data_rest,EYspec_data_rest,xphot_rest,yphot_rest,eyphot_rest,w_sl,fnu_sl,z_obs=z_obs,subtit = title_spec)
 
         # plot SFR
-        plot_SFH(dict_params_c,z_obs,subtit = title_spec , ax=None)
+        #plot_SFH(dict_params_c,z_obs,subtit = title_spec , ax=None)
 
         #save parameters
         filename_params = f"fitparams_{selected_spectrum_tag}.pickle"
         with open(filename_params, 'wb') as f:
             print(dict_out)
             pickle.dump(dict_out, f)
+
+        plt.show()
 
 
 
