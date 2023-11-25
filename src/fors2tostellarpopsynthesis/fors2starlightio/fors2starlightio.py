@@ -286,7 +286,7 @@ class Fors2DataAcess():
 
         :param groupname: identifier tag name of the spectrum
         :type groupname: str
-        
+
         :param nsigs: the number of std dev, defaults to 8.
         :type nsigs: float, optional
         :return: the spectrum cleaned
@@ -310,7 +310,7 @@ class Fors2DataAcess():
             Z = Y - gpr.predict(X[:, None], return_std=False)
             DeltaY = np.abs(Z)
             bkg = np.sqrt(np.median(DeltaY**2))
-            
+
             #indexes_toremove = np.where(np.abs(DeltaY)> nsigs * background)[0]
             indexes_toremove = np.where(np.logical_or(DeltaY> nsigs * bkg,Y<=0))[0]
 
@@ -326,7 +326,7 @@ class Fors2DataAcess():
         else:
             print(f'getspectrum_fromgroup : No group {groupname}')
         return spec_dict
-    
+
     def get_photmagnitudes(self,specname:str) -> tuple[np.array,np.array]:
         """get magnitudes and errors from phtometric surveys
 
@@ -336,13 +336,13 @@ class Fors2DataAcess():
         :rtype: tuple[np.array,np.array]
         """
         attrs = self.getattribdata_fromgroup(specname)
-        
+
         mags = np.array([ attrs["fuv_mag"], attrs["nuv_mag"], attrs['MAG_GAAP_u'], attrs['MAG_GAAP_g'], attrs['MAG_GAAP_r'], attrs['MAG_GAAP_i'], attrs['MAG_GAAP_Z'], attrs['MAG_GAAP_Y'],
             attrs['MAG_GAAP_J'], attrs['MAG_GAAP_H'],attrs['MAG_GAAP_Ks'] ])
 
         magserr = np.array([ attrs["fuv_magerr"], attrs["nuv_magerr"], attrs['MAGERR_GAAP_u'], attrs['MAGERR_GAAP_g'], attrs['MAGERR_GAAP_r'], attrs['MAGERR_GAAP_i'], attrs['MAGERR_GAAP_Z'], attrs['MAGERR_GAAP_Y'],
             attrs['MAGERR_GAAP_J'], attrs['MAGERR_GAAP_H'],attrs['MAGERR_GAAP_Ks'] ])
-        
+
         return mags,magserr
 
     def get_photfluxes(self,specname:str) -> tuple[np.array,np.array]:
@@ -354,13 +354,13 @@ class Fors2DataAcess():
         :rtype: tuple[np.array,np.array]
         """
         attrs = self.getattribdata_fromgroup(specname)
-        
+
         mags = np.array([ attrs["fuv_mag"], attrs["nuv_mag"], attrs['MAG_GAAP_u'], attrs['MAG_GAAP_g'], attrs['MAG_GAAP_r'], attrs['MAG_GAAP_i'], attrs['MAG_GAAP_Z'], attrs['MAG_GAAP_Y'],
             attrs['MAG_GAAP_J'], attrs['MAG_GAAP_H'],attrs['MAG_GAAP_Ks'] ])
 
         magserr = np.array([ attrs["fuv_magerr"], attrs["nuv_magerr"], attrs['MAGERR_GAAP_u'], attrs['MAGERR_GAAP_g'], attrs['MAGERR_GAAP_r'], attrs['MAGERR_GAAP_i'], attrs['MAGERR_GAAP_Z'], attrs['MAGERR_GAAP_Y'],
             attrs['MAGERR_GAAP_J'], attrs['MAGERR_GAAP_H'],attrs['MAGERR_GAAP_Ks'] ])
-        
+
         mfluxes = [ 10**(-0.4*m) for m in mags ]
         mfluxeserr = []
         for f,em in zip(mfluxes,magserr):
@@ -386,7 +386,7 @@ class Fors2DataAcess():
         spec = self.getspectrumcleanedemissionlines_fromgroup(specname)
         attrs = self.getattribdata_fromgroup(specname)
         z_obs = attrs["redshift"]
-        asep_galex = attrs['asep_galex'] 
+        asep_galex = attrs['asep_galex']
         asep_kids = attrs['asep_kids']
         speclabel = f"specname : z={z_obs:.2f} sep = ({asep_galex:.3f}, {asep_kids:.3f}) arscec"
 
@@ -458,7 +458,7 @@ class Fors2DataAcess():
         spec = self.getspectrumcleanedemissionlines_fromgroup(specname)
         attrs = self.getattribdata_fromgroup(specname)
         z_obs = attrs["redshift"]
-        asep_galex = attrs['asep_galex'] 
+        asep_galex = attrs['asep_galex']
         asep_kids = attrs['asep_kids']
         speclabel = f"specname : z={z_obs:.2f} sep = ({asep_galex:.3f}, {asep_kids:.3f}) arscec"
         title = specname + f" redshift = {z_obs:.3f}" + " spectrum rescaled"
