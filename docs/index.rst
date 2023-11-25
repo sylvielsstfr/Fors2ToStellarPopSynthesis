@@ -75,5 +75,8 @@ Notes:
    :hidden:
 
    Home page <self>
+   Introduction <introduction>
+   Quick Start <quickstart>
+   Description <description>
    API Reference <autoapi/index>
    Notebooks <notebooks>
