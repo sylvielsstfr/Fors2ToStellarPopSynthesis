@@ -21,7 +21,7 @@ from sedpy import observate
 
 class FilterInfo():
     """Class to encapsulate different tasks to fetch the filters
-    transmissions. The survey used are Galex in UV, SDSS for KIDS 
+    transmissions. The survey used are Galex in UV, SDSS for KIDS
     in visible and VISTA in IR.
     """
     def __init__(self)->None :
@@ -132,7 +132,7 @@ class FilterInfo():
     def get_2lists(self):
         """
         Provide filter transmissions curves as a tuple of lists for all filters
-        :return: a list of wavelengths for each filter and a list of transmission for each filter 
+        :return: a list of wavelengths for each filter and a list of transmission for each filter
         :rtype: two lists
         """
         the_list1 = []
