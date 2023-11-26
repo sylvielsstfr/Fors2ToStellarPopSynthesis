@@ -51,6 +51,7 @@ gpr = GaussianProcessRegressor(kernel=kernel ,random_state=0)
 
 FLAG_REMOVE_GALEX = True
 FLAG_REMOVE_GALEX_FUV = True
+FLAG_PLOT = False
 
 if __name__ == '__main__':
 
@@ -66,10 +67,14 @@ if __name__ == '__main__':
     sl = SLDataAcess()
     sl_tags = sl.get_list_of_groupkeys()
 
-    # select the spectra
-    all_selected_spectrum_tags = fors2_tags[np.arange(0,100)]
+    ###########################################################################
+    # here select range for the spectra to be fitted
+    ###########################################################################
+    file_indexes_selected = np.arange(397 ,550)
+    all_selected_spectrum_tags = fors2_tags[file_indexes_selected]
 
 
+    rank = file_indexes_selected[0]
 
     for selected_spectrum_tag in all_selected_spectrum_tags:
         selected_spectrum_number = int(re.findall("^SPEC(.*)", selected_spectrum_tag)[0])
@@ -80,6 +85,10 @@ if __name__ == '__main__':
 
         title_spec = selected_spectrum_tag + f" z= {z_obs:.2f}"
 
+        print( "##################################################################")
+        print(f"#       FIT {rank} spectrum :   {title_spec}")
+        print( "##################################################################")
+        rank += 1
 
         #retrieve magnitude data
         data_mags, data_magserr = fors2.get_photmagnitudes(selected_spectrum_tag)
@@ -148,6 +157,11 @@ if __name__ == '__main__':
         # get the magnitudes and magnitude errors
         data_selected_mags =  jnp.array(data_mags[index_selected_filters])
         data_selected_magserr = jnp.array(data_magserr[index_selected_filters])
+
+
+        if len(data_selected_mags) == 0:
+            print(f">>>>>>>> No magnitude for spectrum {selected_spectrum_tag} ==> SKIP")
+            continue
 
         #fit with magnitudes only
         lbfgsb = jaxopt.ScipyBoundedMinimize(fun=lik_mag, method="L-BFGS-B")
@@ -229,7 +243,8 @@ if __name__ == '__main__':
         w_sl ,fnu_sl , _ = rescale_starlight_inrangefors2(dict_sl["wl"],dict_sl["fnu"],Xspec_data_rest,Yspec_data_rest )
 
         # plot starlight
-        plot_fit_ssp_spectrophotometry_sl(dict_params_c ,Xspec_data_rest,Yspec_data_rest,EYspec_data_rest,xphot_rest,yphot_rest,eyphot_rest,w_sl,fnu_sl,z_obs=z_obs,subtit = title_spec)
+        if FLAG_PLOT:
+            plot_fit_ssp_spectrophotometry_sl(dict_params_c ,Xspec_data_rest,Yspec_data_rest,EYspec_data_rest,xphot_rest,yphot_rest,eyphot_rest,w_sl,fnu_sl,z_obs=z_obs,subtit = title_spec)
 
         # plot SFR
         #plot_SFH(dict_params_c,z_obs,subtit = title_spec , ax=None)
@@ -240,7 +255,8 @@ if __name__ == '__main__':
             print(dict_out)
             pickle.dump(dict_out, f)
 
-        plt.show()
+        if FLAG_PLOT:
+            plt.show()
 
 
 
