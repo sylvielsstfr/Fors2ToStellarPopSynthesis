@@ -13,8 +13,10 @@ Notebooks
     Fit single spectrum with all functions inside foors2 lib <notebooks/fitters/FitFors2OneSpecShort>
     Fit many Spectra Notebooks <notebooks/fitters/FitFors2ManySpecLoop>
     Merge all Fit results into a single dataframe <notebooks/fitters/MergeFitParams> 
-    Start to analyse results of fits <notebooks/fitanalysis/ViewFittedSSP>
-
+    Simple view fitted spectra <notebooks/fitanalysis/ViewFittedSSP>
+    Compare fitted SSP with StarLight spectra <notebooks/fitanalysis/CompareFittedSSPSL>
+    Save fitted SSP spectra <notebooks/fitanalysis/SaveFittedSSP>
+    
     
 
     
