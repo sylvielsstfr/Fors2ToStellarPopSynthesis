@@ -7,6 +7,7 @@ jupytext
 jupyter
 matplotlib
 numpy
+scikit-learn
 pandas
 pytables
 astropy

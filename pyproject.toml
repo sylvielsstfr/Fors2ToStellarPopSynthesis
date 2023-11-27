@@ -47,6 +47,7 @@ dev = [
     "numpyro", # for probabilistic programming
     "interpax", # for differentiable interpolation
     "numpy",
+    "scikit-learn",
     "pandas",
     "fsps",
     "dsps",
