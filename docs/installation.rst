@@ -41,3 +41,9 @@ Notes:
    the Python Project Template documentation on
    `Sphinx and Python Notebooks <https://lincc-ppt.readthedocs.io/en/latest/practices/sphinx.html#python-notebooks>`_.
 
+
+Data installation
+-----------------
+
+Please refer to the section :ref:`installation-data-section` to install data for `dsps`.
+

@@ -66,20 +66,33 @@ The documentation is generated from the docs/ folder as folow:
 Then the documentation is produced in ``_readthedocs`` folder. 
 
 
-examples/ (old)
---------------
+examples/(deprecated)
+---------------------
 
-Folder where dependency packages were originaly tested in notebooks. 
+Folder from which FSPS and DSPS dependencies libraries were originaly tested.
+As this package is being developped, those notebooks become deprecated. However those examples are kept to explore more
+functionalities or features of the above packages.
 
-lib/
-----
-Original libaries used by notebooks in ``examples/``
+lib/(deprecated)
+----------------
 
-
-
-
-
+Original libraries used in  by notebooks in ``examples/``
 
 
+.. _installation-data-section:
+
+External data
+-------------
+
+Before running any scripts or data, please download 
+from `DSPS data portal <https://portal.nersc.gov/project/hacc/aphearin/DSPS_data/>`_ .
+
+Please note that data files from DSPS must be installed in data folder  ``src/fitters/data``:
 
 
+.. code-block:: bash
+
+   >>  curl https://portal.nersc.gov/project/hacc/aphearin/DSPS_data/ssp_data_fsps_v3.2_lgmet_age.h5 > tempdata.h5
+
+
+Other datafiles can be downloaded as well.
