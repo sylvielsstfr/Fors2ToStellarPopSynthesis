@@ -56,7 +56,8 @@ dev = [
     "seaborn",
     "astropy", #need constants
     "tables",
-    "h5py"
+    "h5py",
+    "jupyter"
 ]
 
 

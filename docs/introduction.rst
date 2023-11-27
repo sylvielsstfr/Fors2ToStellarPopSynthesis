@@ -76,10 +76,19 @@ lib/
 Original libaries used by notebooks in ``examples/``
 
 
+.. _installation-data-section:
+
+External data
+-------------
+
+Before running any scripts or data, please download from ``DSPS data portal <https://portal.nersc.gov/project/hacc/aphearin/DSPS_data/>_ ``
+
+Please note that data files from DSPS must be installed in data folder  ``src/fitters/data``:
 
 
+.. code-block:: bash
+
+>>  curl https://portal.nersc.gov/project/hacc/aphearin/DSPS_data/ssp_data_fsps_v3.2_lgmet_age.h5 > tempdata.h5
 
 
-
-
-
+Other datafile can be downloaded as well.
