@@ -40,6 +40,9 @@ For more information about the project template see the
 
 ## Dev Guide - Getting Started
 
+If you plan to contribute to developpement, it is recommended to follow
+the `` LINCC-Frameworks`` recommendations.
+
 Before installing any dependencies or writing code, it's a great idea to create a
 virtual environment. LINCC-Frameworks engineers primarily use `conda` to manage virtual
 environments. If you have conda installed locally, you can run the following to

@@ -47,12 +47,15 @@ dev = [
     "numpyro", # for probabilistic programming
     "interpax", # for differentiable interpolation
     "numpy",
+    "fsps",
     "dsps",
     "diffstar",
     "diffmah",
     "astro-sedpy",
     "seaborn",
     "astropy", #need constants
+    "tables",
+    "h5py"
 ]
 
 

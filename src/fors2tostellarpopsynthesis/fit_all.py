@@ -70,7 +70,9 @@ if __name__ == '__main__':
     ###########################################################################
     # here select range for the spectra to be fitted
     ###########################################################################
-    file_indexes_selected = np.arange(397 ,550)
+    # this code may crash, probably due to bad some bad garbage collection ?
+    #
+    file_indexes_selected = np.arange(0 ,550)
     all_selected_spectrum_tags = fors2_tags[file_indexes_selected]
 
 
@@ -257,9 +259,3 @@ if __name__ == '__main__':
 
         if FLAG_PLOT:
             plt.show()
-
-
-
-
-
-

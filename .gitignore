@@ -151,3 +151,4 @@ _html/
 *.pdf
 *.h5
 *.pickle
+*.csv
