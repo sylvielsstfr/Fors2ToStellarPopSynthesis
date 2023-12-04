@@ -55,6 +55,8 @@ PARAMS_MIN = np.concatenate(([DEFAULT_MAH_PARAMS_MIN,DEFAULT_MS_PARAMS_MIN,DEFAU
                               DEFAULT_DUST_PARAMS_MIN,DEFAULT_SCALEF_PARAMS_MIN]))
 PARAMS_MAX = np.concatenate(([DEFAULT_MAH_PARAMS_MAX,DEFAULT_MS_PARAMS_MAX,DEFAULT_Q_PARAMS_MAX,
                               DEFAULT_DUST_PARAMS_MAX,DEFAULT_SCALEF_PARAMS_MAX]))
+PARAMS_MIN= jnp.array(PARAMS_MIN)
+PARAMS_MAX= jnp.array(PARAMS_MAX)
 
 INIT_PARAMS = np.concatenate(DEFAULT_PARAMS)
 INIT_PARAMS = jnp.array(INIT_PARAMS)
@@ -164,6 +166,9 @@ class SSPParametersFit():
                               self.DEFAULT_DUST_PARAMS_MIN,self.DEFAULT_SCALEF_PARAMS_MIN]))
         self.PARAMS_MAX = np.concatenate(([self.DEFAULT_MAH_PARAMS_MAX,self.DEFAULT_MS_PARAMS_MAX,self.DEFAULT_Q_PARAMS_MAX,
                               self.DEFAULT_DUST_PARAMS_MAX,self.DEFAULT_SCALEF_PARAMS_MAX]))
+
+        self.PARAMS_MIN= jnp.array(self.PARAMS_MIN)
+        self.PARAMS_MAX= jnp.array(self.PARAMS_MAX)
 
         self.INIT_PARAMS = np.concatenate(self.DEFAULT_PARAMS)
         self.INIT_PARAMS = jnp.array(INIT_PARAMS)
