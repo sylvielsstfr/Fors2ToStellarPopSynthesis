@@ -28,3 +28,4 @@ seaborn
 astropy
 tables
 h5py
+openpyxl

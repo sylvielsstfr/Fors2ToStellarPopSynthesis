@@ -151,7 +151,8 @@ def galaxymodel_nodust_av(wlsin,Fobs=None,
     valmin = minparamval[idx]
     valmax = maxparamval[idx]
     scale = sigmaparamval[idx]
-    val = numpyro.sample(name,dist.Uniform(valmin,valmax))
+    #val = numpyro.sample(name,dist.Uniform(valmin,valmax))
+    val = numpyro.sample(name,dist.Normal(valmean,scale))
     dict_params[name] = val
 
     # MAH_logtc
@@ -367,7 +368,8 @@ def galaxymodel_nodust(wlsin,Fobs=None,
     valmin = minparamval[idx]
     valmax = maxparamval[idx]
     scale = sigmaparamval[idx]
-    val = numpyro.sample(name,dist.Uniform(valmin,valmax))
+    #val = numpyro.sample(name,dist.Uniform(valmin,valmax))
+    val = numpyro.sample(name,dist.Normal(valmean,scale))
     dict_params[name] = val
 
     # MAH_logtc
@@ -585,7 +587,8 @@ def galaxymodel_withdust_av(wlsin,Fobs=None,
     valmin = minparamval[idx]
     valmax = maxparamval[idx]
     scale = sigmaparamval[idx]
-    val = numpyro.sample(name,dist.Uniform(valmin,valmax))
+    #val = numpyro.sample(name,dist.Uniform(valmin,valmax))
+    val = numpyro.sample(name,dist.Normal(valmean,scale))
     dict_params[name] = val
 
     # MAH_logtc
@@ -805,7 +808,8 @@ def galaxymodel_withdust(wlsin,Fobs=None,
     valmin = minparamval[idx]
     valmax = maxparamval[idx]
     scale = sigmaparamval[idx]
-    val = numpyro.sample(name,dist.Uniform(valmin,valmax))
+    #val = numpyro.sample(name,dist.Uniform(valmin,valmax))
+    val = numpyro.sample(name,dist.Normal(valmean,scale))
     dict_params[name] = val
 
     # MAH_logtc
@@ -1024,7 +1028,8 @@ def galaxymodel_withdust_try(wlsin,Fobs=None,
     valmin = minparamval[idx]
     valmax = maxparamval[idx]
     scale = sigmaparamval[idx]
-    val = numpyro.sample(name,dist.Uniform(valmin,valmax))
+    #val = numpyro.sample(name,dist.Uniform(valmin,valmax))
+    val = numpyro.sample(name,dist.Normal(valmean,scale))
     dict_params[name] = val
 
     # MAH_logtc

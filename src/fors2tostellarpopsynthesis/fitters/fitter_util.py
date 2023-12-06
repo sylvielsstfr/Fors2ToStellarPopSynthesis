@@ -10,6 +10,8 @@ It contains fluxes rescaling function and plots
 # pylint: disable=anomalous-backslash-in-string
 # pylint: disable=trailing-newlines
 # pylint: disable=dangerous-default-value
+# pylint: disable=unused-import
+# pylint: disable=line-too-long
 
 
 import arviz as az
@@ -27,6 +29,30 @@ from fors2tostellarpopsynthesis.fitters.fitter_jaxopt import (
     mean_sfr, ssp_spectrum_fromparam)
 
 jax.config.update("jax_enable_x64", True)
+
+def calc_ratio(wl,spec, w_blue = [3750.,3950.], w_red = [4050.,4250] ):
+    """Calculate the ratio of spectra in the wavelength range.
+
+
+    :param wl: wavelength
+    :type wl: array of float
+    :param spec: spectrum in fnu
+    :type spec: array of float
+    :param w_blue: wavelength range in blue part of the spectrum
+    :type w_blue: array of two floats, default to calculate D4000.
+    :param w_red: wavelength range in red part of the spectrum
+    :type w_red: array of two floats, default to calculate D4000.
+    :return: the flux ratio red/blue
+    :rtype: float
+    """
+
+    indexes_red = np.where(np.logical_and(wl>=w_red[0], wl<=w_red[1]))[0]
+    indexes_blue = np.where(np.logical_and(wl>=w_blue[0], wl<=w_blue[1]))[0]
+    int_spec_blue = np.trapz(spec[indexes_blue],wl[indexes_blue])
+    int_spec_red = np.trapz(spec[indexes_red],wl[indexes_red])
+    specratio = int_spec_red/int_spec_blue
+    return specratio
+
 
 def rescale_photometry(params,wls,mags,errmags,z_obs):
     """
