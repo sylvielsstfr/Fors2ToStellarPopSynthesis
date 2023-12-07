@@ -8,10 +8,18 @@ It contains fluxes rescaling function and plots
 # pylint: disable=too-many-arguments
 # pylint: disable=line-too-long
 # pylint: disable=anomalous-backslash-in-string
+# pylint: disable=trailing-newlines
+# pylint: disable=dangerous-default-value
+# pylint: disable=unused-import
+# pylint: disable=line-too-long
 
+
+import arviz as az
 import jax
 import jax.numpy as jnp
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+import numpy as np
 from dsps.cosmology import DEFAULT_COSMOLOGY, age_at_z
 #import numpy as np
 from interpax import interp1d
@@ -21,6 +29,30 @@ from fors2tostellarpopsynthesis.fitters.fitter_jaxopt import (
     mean_sfr, ssp_spectrum_fromparam)
 
 jax.config.update("jax_enable_x64", True)
+
+def calc_ratio(wl,spec, w_blue = [3750.,3950.], w_red = [4050.,4250] ):
+    """Calculate the ratio of spectra in the wavelength range.
+
+
+    :param wl: wavelength
+    :type wl: array of float
+    :param spec: spectrum in fnu
+    :type spec: array of float
+    :param w_blue: wavelength range in blue part of the spectrum
+    :type w_blue: array of two floats, default to calculate D4000.
+    :param w_red: wavelength range in red part of the spectrum
+    :type w_red: array of two floats, default to calculate D4000.
+    :return: the flux ratio red/blue
+    :rtype: float
+    """
+
+    indexes_red = np.where(np.logical_and(wl>=w_red[0], wl<=w_red[1]))[0]
+    indexes_blue = np.where(np.logical_and(wl>=w_blue[0], wl<=w_blue[1]))[0]
+    int_spec_blue = np.trapz(spec[indexes_blue],wl[indexes_blue])
+    int_spec_red = np.trapz(spec[indexes_red],wl[indexes_red])
+    specratio = int_spec_red/int_spec_blue
+    return specratio
+
 
 def rescale_photometry(params,wls,mags,errmags,z_obs):
     """
@@ -447,3 +479,63 @@ def plot_SFH(params,z_obs,subtit,ax=None):
     ax.grid()
     #ax.legend()
     plt.show(block = False)
+
+
+def plot_params_kde(samples,hdi_probs=[0.393, 0.865, 0.989],
+                    patName=None, fname=None, pcut=None,
+                   var_names=None, point_estimate="median"):
+    """Plot contour ellipse from samples
+
+    :param samples: _description_
+    :type samples: _type_
+    :param hdi_probs: _description_, defaults to [0.393, 0.865, 0.989]
+    :type hdi_probs: list, optional
+    :param patName: _description_, defaults to None
+    :type patName: _type_, optional
+    :param fname: _description_, defaults to None
+    :type fname: _type_, optional
+    :param pcut: _description_, defaults to None
+    :type pcut: _type_, optional
+    :param var_names: _description_, defaults to None
+    :type var_names: _type_, optional
+    :param point_estimate: _description_, defaults to "median"
+    :type point_estimate: str, optional
+    """
+
+    if pcut is not None:
+        low = pcut[0]
+        up  = pcut[1]
+        #keep only data in the [low, up] percentiles ex. 0.5, 99.5
+        samples={name:value[(value>np.percentile(value,low)) &  (value<np.percentile(value,up))] \
+          for name, value in samples.items()}
+        len_min = np.min([len(value) for name, value in samples.items()])
+        len_max = np.max([len(value) for name, value in samples.items()])
+        if (len_max-len_min)>0.01*len_max:
+            print(f"Warning: pcut leads to min/max spls size = {len_min}/{len_max}")
+        samples = {name:value[:len_min] for name, value in samples.items()}
+
+    axs= az.plot_pair(
+            samples,
+            var_names=var_names,
+            figsize=(10,10),
+            kind="kde",
+    #        marginal_kwargs={"plot_kwargs": {"lw": 3, "c": "b"}},
+            kde_kwargs={
+#                "hdi_probs": [0.68, 0.9],  # Plot 68% and 90% HDI contours
+                "hdi_probs":hdi_probs,  # 1, 2 and 3 sigma contours
+                "contour_kwargs":{"colors":('r', 'green', 'blue'), "linewidths":3},
+                "contourf_kwargs":{"alpha":0},
+            },
+            point_estimate_kwargs={"lw": 3, "c": "b"},
+            marginals=True, textsize=20, point_estimate=point_estimate,
+        )
+
+    plt.tight_layout()
+
+    if patName is not None:
+        patName_patch = mpatches.Patch(color='b', label=patName)
+        axs[0,0].legend(handles=[patName_patch], fontsize=40, bbox_to_anchor=(1, 0.7))
+    if fname is not None:
+        plt.savefig(fname)
+        plt.close()
+

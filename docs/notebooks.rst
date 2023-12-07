@@ -16,6 +16,11 @@ Notebooks
     Simple view fitted spectra <notebooks/fitanalysis/ViewFittedSSP>
     Compare fitted SSP with StarLight spectra <notebooks/fitanalysis/CompareFittedSSPSL>
     Save fitted SSP spectra <notebooks/fitanalysis/SaveFittedSSP>
+    Vary parameters to view the impact on SED and SFR <notebooks/corrparameters/vary_manyparameters>
+    Probabilistic programming with numpyro <notebooks/corrparameters/study_correlparameters>        
+    Probabilistic programming with numpyro using src <notebooks/corrparameters/study_correlparameters_fromlib>
+    Plot confidence ellipses from study_correlparameter numpyro sim <notebooks/corrparameters/plot_correlparameters_fromlib> 
+    
     
     
 

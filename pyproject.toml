@@ -58,7 +58,8 @@ dev = [
     "astropy", #need constants
     "tables",
     "h5py",
-    "jupyter"
+    "jupyter",
+    "openpyxl"
 ]
 
 
