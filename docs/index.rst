@@ -43,6 +43,7 @@ Please refer to see :ref:`installation-section` for more details.
    Home page <self>
    Introduction <introduction>
    Installation <installation>
+   Installation on GPU <installationgpu>
    Quick Start <quickstart>
    Description <description>
    API Reference <autoapi/index>

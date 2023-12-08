@@ -20,7 +20,9 @@ Notebooks
     Probabilistic programming with numpyro <notebooks/corrparameters/study_correlparameters>        
     Probabilistic programming with numpyro using src <notebooks/corrparameters/study_correlparameters_fromlib>
     Plot confidence ellipses from study_correlparameter numpyro sim <notebooks/corrparameters/plot_correlparameters_fromlib> 
-    
+    Plot spectra from fitted parameters <notebooks/corrparameters/plot_spectrfromparameters>
+    Example to debug initialisation a a spectrum to fit  <notebooks/corrparameters/test_spectruminit>
+
     
     
 
