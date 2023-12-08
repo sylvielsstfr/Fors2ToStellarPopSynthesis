@@ -3,7 +3,7 @@
 Installation
 ============
 
-
+.. highlight:: sh
 
 Dev Guide - Getting Started
 ---------------------------

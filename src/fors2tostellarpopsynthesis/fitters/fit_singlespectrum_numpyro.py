@@ -44,6 +44,10 @@ from fors2tostellarpopsynthesis.parameters import (SSPParametersFit,
 jax.config.update("jax_enable_x64", True)
 
 
+print("============= Running fit_singlespectrum_numpyro ============================")
+print(" >>>> Device  :", jax.devices())
+
+
 # Steering parameters
 
 ## Steering MCMC
