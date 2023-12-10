@@ -8,6 +8,7 @@
 # pylint: disable=R0402
 # pylint: disable=E1101
 # pylint: disable=R0915
+# pylint: disable=too-few-public-methods
 from collections import OrderedDict
 
 import jax.numpy as jnp
@@ -215,7 +216,6 @@ class FilterInfo():
         print("filters_indexlist   : \t ", self.filters_indexlist)
         print("filters_surveylist  : \t ", self.filters_surveylist)
         print("filters__namelist   : \t ", self.filters_namelist)
-
 
 
 
