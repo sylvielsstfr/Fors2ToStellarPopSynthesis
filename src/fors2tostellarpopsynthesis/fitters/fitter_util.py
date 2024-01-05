@@ -30,6 +30,16 @@ from fors2tostellarpopsynthesis.fitters.fitter_jaxopt import (
 
 jax.config.update("jax_enable_x64", True)
 
+
+
+def func_strip_name(x):
+    """
+    stripp string of filters name for shorter name plotting
+    :param x: name
+    :type x: string
+    """
+    return x.split('_')[-1]
+
 def calc_ratio(wl,spec, w_blue = [3750.,3950.], w_red = [4050.,4250] ):
     """Calculate the ratio of spectra in the wavelength range.
 
@@ -201,7 +211,7 @@ def plot_fit_ssp_photometry(params,wls,mags,errmags,z_obs,subtit,ax=None):
 
     # plot photometric data-points
     label = "Photometry for " + subtit
-    ax.errorbar( xphot , yphot, yerr=eyphot, marker='o', color="black",ecolor="black",markersize=8,lw=2,label=label)
+    ax.errorbar( xphot , yphot, yerr=eyphot, marker='o', color="black",ecolor="black",markersize=12,lw=2,label=label)
 
     title = "SED $L_\\nu$ with and without dust and rescaled photometry (rest frame)"
     ax.set_title(title)
@@ -341,7 +351,7 @@ def plot_fit_ssp_spectrophotometry(params,Xspec_data_rest,Yspec_data_rest,EYspec
     #...............................................................................
 
     #xphot , yphot, eyphot = Xphot_data_rest,Yphot_data_rest,EYphot_data_rest
-    ax.errorbar( xphot , yphot, yerr=eyphot, marker='o', color="black",ecolor="black",markersize=8,lw=2,label=label)
+    ax.errorbar( xphot , yphot, yerr=eyphot, marker='o', color="black",ecolor="black",markersize=12,lw=2,label=label)
 
     title = "SED $L_\\nu$ with/wo dust spectroscopy and photometry combined (rest frame)"
     ax.set_title(title)
@@ -424,7 +434,7 @@ def plot_fit_ssp_spectrophotometry_sl(params,Xspec_data_rest,Yspec_data_rest,EYs
     xphot , yphot, eyphot =  Xphot_data_rest,Yphot_data_rest*scaling_factor,EYphot_data_rest*scaling_factor
     #...............................................................................
 
-    ax.errorbar( xphot , yphot, yerr=eyphot, marker='o', color="black",ecolor="black",markersize=8,lw=2,label=label)
+    ax.errorbar( xphot , yphot, yerr=eyphot, marker='o', color="black",ecolor="black",markersize=12,lw=2,label=label)
 
     title = "SED $L_\\nu$ with/wo dust spectroscopy and photometry combined (rest frame)"
     ax.set_title(title)
