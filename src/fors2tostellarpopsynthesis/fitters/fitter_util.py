@@ -25,11 +25,28 @@ from dsps.cosmology import DEFAULT_COSMOLOGY, age_at_z
 from interpax import interp1d
 from jax import vmap
 
+from fors2tostellarpopsynthesis.filters import FilterInfo
 from fors2tostellarpopsynthesis.fitters.fitter_jaxopt import (
     mean_sfr, ssp_spectrum_fromparam)
 
 jax.config.update("jax_enable_x64", True)
 
+# build the list of filter tag to plot
+ps = FilterInfo()
+print(ps.filters_indexlist)
+print(ps.filters_surveylist)
+print(ps.filters_namelist)
+
+index_selected_filters = np.arange(0,11)
+list_name_f_sel = []
+list_wlmean_f_sel = []
+
+for index in index_selected_filters:
+    the_filt = ps.filters_transmissionlist[index]
+    the_wlmean = the_filt.wave_mean
+    list_wlmean_f_sel.append(the_wlmean)
+    list_name_f_sel.append(ps.filters_namelist[index])
+list_wlmean_f_sel = jnp.array(list_wlmean_f_sel)
 
 
 def func_strip_name(x):
@@ -219,9 +236,16 @@ def plot_fit_ssp_photometry(params,wls,mags,errmags,z_obs,subtit,ax=None):
     ax.set_xlabel("$\lambda (\\AA)$")
     ax.set_ylabel("$L_\\nu(\lambda)$ (AB units - maggies")
 
+
+
     ymax = y_nodust.max()
     ylim_max = ymax*5.
     ylim_min = ymax/0.5e4
+
+    filter_tags = [func_strip_name(n) for n in list_name_f_sel]
+    for idx,tag in enumerate(filter_tags):
+        ax.text(xphot[idx],2.*ymax,tag,fontsize=12,fontweight="bold",horizontalalignment='center',verticalalignment='center')
+        ax.axvline(xphot[idx],linestyle=':')
 
     __= ax.set_xlim(1e3,1e6)
     __= ax.set_ylim(ylim_min ,ylim_max )
@@ -361,6 +385,11 @@ def plot_fit_ssp_spectrophotometry(params,Xspec_data_rest,Yspec_data_rest,EYspec
     ylim_max = ymax*5.
     ylim_min = ymax/0.5e4
 
+    filter_tags = [func_strip_name(n) for n in list_name_f_sel]
+    for idx,tag in enumerate(filter_tags):
+        ax.text(xphot[idx],2.*ymax,tag,fontsize=12,fontweight="bold",horizontalalignment='center',verticalalignment='center')
+        ax.axvline(xphot[idx],linestyle=':')
+
     ax.set_xlabel("$\lambda (\\AA)$")
     ax.set_ylabel("$L_\\nu(\lambda)$ (AB units - maggies)")
 
@@ -443,6 +472,11 @@ def plot_fit_ssp_spectrophotometry_sl(params,Xspec_data_rest,Yspec_data_rest,EYs
     ymax = y_nodust.max()
     ylim_max = ymax*5.
     ylim_min = ymax/0.5e4
+
+    filter_tags = [func_strip_name(n) for n in list_name_f_sel]
+    for idx,tag in enumerate(filter_tags):
+        ax.text(xphot[idx],2.*ymax,tag,fontsize=12,fontweight="bold",horizontalalignment='center',verticalalignment='center')
+        ax.axvline(xphot[idx],linestyle=':')
 
     __= ax.set_xlim(1e3,1e6)
     __= ax.set_ylim(ylim_min,ylim_max)
