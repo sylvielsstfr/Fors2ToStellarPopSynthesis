@@ -40,7 +40,7 @@ DEFAULT_DUST_PARAMS_MIN = DEFAULT_DUST_PARAMS + np.array([-1.,-1.,-0.1])
 DEFAULT_DUST_PARAMS_MAX = DEFAULT_DUST_PARAMS + np.array([2.,1.,0.25])
 
 
-#Scaling parameters
+#Metalicity parameters
 SCALEF = 1.0
 DEFAULT_SCALEF_PARAMS = np.array([SCALEF])
 SCALEF_PARAMNAMES = ["SCALEF"]
