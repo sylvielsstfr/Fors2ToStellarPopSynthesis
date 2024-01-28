@@ -292,7 +292,8 @@ def plot_fit_ssp_spectroscopy(params,Xspec_data_rest,Yspec_data_rest,EYspec_data
     ax.plot(x,y_nodust,'-',color='red',lw=1,label="fitted DSPS model No dust")
 
     # plot spectroscopic data (rest-frame)
-    xspec_r,yspec,eyspec = Xspec_data_rest,Yspec_data_rest*params["SCALEF"],EYspec_data_rest*params["SCALEF"]
+    #xspec_r,yspec,eyspec = Xspec_data_rest,Yspec_data_rest*params["SCALEF"],EYspec_data_rest*params["SCALEF"]
+    xspec_r,yspec,eyspec = Xspec_data_rest,Yspec_data_rest,EYspec_data_rest
     label = "Fors spectrum " + subtit
     ax.plot(xspec_r,yspec,'b-',lw=3,label = label )
 
@@ -358,8 +359,8 @@ def plot_fit_ssp_spectrophotometry(params,Xspec_data_rest,Yspec_data_rest,EYspec
     ax.plot(x,y_dust,'-',color='green',lw=1,label="fitted DSPS model with dust")
     ax.plot(x,y_nodust,'-',color='red',lw=1,label="fitted DSPS model no dust")
 
-    xspec_r,yspec,eyspec = Xspec_data_rest,Yspec_data_rest*params["SCALEF"],EYspec_data_rest*params["SCALEF"]
-
+    #xspec_r,yspec,eyspec = Xspec_data_rest,Yspec_data_rest*params["SCALEF"],EYspec_data_rest*params["SCALEF"]
+    xspec_r,yspec,eyspec = Xspec_data_rest,Yspec_data_rest,EYspec_data_rest
     # plot Fors2 data
     label = "Fors spectrum " + subtit
     ax.plot(xspec_r,yspec,'b-',lw=3,label = label )
@@ -449,7 +450,8 @@ def plot_fit_ssp_spectrophotometry_sl(params,Xspec_data_rest,Yspec_data_rest,EYs
     ax.plot(w_sl ,fnu_sl,'-',color="grey",lw=2,label="StarLight model")
 
     # plot Fors2 spectrum in restframe
-    xspec_r,yspec,eyspec = Xspec_data_rest,Yspec_data_rest*params["SCALEF"],EYspec_data_rest*params["SCALEF"]
+    #xspec_r,yspec,eyspec = Xspec_data_rest,Yspec_data_rest*params["SCALEF"],EYspec_data_rest*params["SCALEF"]
+    xspec_r,yspec,eyspec = Xspec_data_rest,Yspec_data_rest,EYspec_data_rest
     label = "Fors spectrum " + subtit
     ax.plot(xspec_r,yspec,'b-',lw=3,label = label )
 
