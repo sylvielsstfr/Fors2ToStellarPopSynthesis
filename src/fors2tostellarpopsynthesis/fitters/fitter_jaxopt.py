@@ -89,8 +89,8 @@ def ssp_spectrum_fromparam(params,z_obs):
     tarr, list_param_mah , list_param_ms, list_param_q)
 
     # metallicity
-    gal_lgmet = -2.0 # log10(Z)
-    gal_lgmet_scatter = 0.2 # lognormal scatter in the metallicity distribution function
+    gal_lgmet = params["LGMET"] # log10(Z)
+    gal_lgmet_scatter = params["LGMETSCATTER"] # lognormal scatter in the metallicity distribution function
 
     # need age of universe when the light was emitted
     t_obs = age_at_z(z_obs, *DEFAULT_COSMOLOGY) # age of the universe in Gyr at z_obs
@@ -164,8 +164,9 @@ def mean_spectrum(wls, params,z_obs):
     tarr, list_param_mah , list_param_ms, list_param_q)
 
     # metallicity
-    gal_lgmet = -2.0 # log10(Z)
-    gal_lgmet_scatter = 0.2 # lognormal scatter in the metallicity distribution function
+    gal_lgmet = params["LGMET"] # log10(Z)
+    gal_lgmet_scatter = params["LGMETSCATTER"] # log
+    
 
     # need age of universe when the light was emitted
     t_obs = age_at_z(z_obs, *DEFAULT_COSMOLOGY) # age of the universe in Gyr at z_obs
@@ -248,8 +249,9 @@ def mean_mags(X, params,z_obs):
     tarr, list_param_mah , list_param_ms, list_param_q)
 
     # metallicity
-    gal_lgmet = -2.0 # log10(Z)
-    gal_lgmet_scatter = 0.2 # lognormal scatter in the metallicity distribution function
+    gal_lgmet = params["LGMET"] # log10(Z)
+    gal_lgmet_scatter = params["LGMETSCATTER"] # lognormal scatter in the metallicity distribution function
+
 
     # need age of universe when the light was emitted
     t_obs = age_at_z(z_obs, *DEFAULT_COSMOLOGY) # age of the universe in Gyr at z_obs
@@ -338,8 +340,9 @@ def mean_sfr(params,z_obs):
     tarr, list_param_mah , list_param_ms, list_param_q)
 
     # metallicity
-    gal_lgmet = -2.0 # log10(Z)
-    gal_lgmet_scatter = 0.2 # lognormal scatter in the metallicity distribution function
+    gal_lgmet = params["LGMET"] # log10(Z)
+    gal_lgmet_scatter = params["LGMETSCATTER"] # lognormal scatter in the metallicity distribution function
+    
 
     # need age of universe when the light was emitted
     t_obs = age_at_z(z_obs, *DEFAULT_COSMOLOGY) # age of the universe in Gyr at z_obs
@@ -382,13 +385,17 @@ def lik_spec(p,wls,F, sigma_obs,z_obs) -> float:
               "AV":p[13],
               "UV_BUMP":p[14],
               "PLAW_SLOPE":p[15],
-              "SCALEF":p[16]
+
+              "LGMET":p[16],
+              "LGMETSCATTER":p[17],
              }
-    scaleF =  params["SCALEF"]
+    
+    # rescaling parameter for spectra  are pre-calculated and applied to data
+    scaleF =  1.0
     # residuals
     resid = mean_spectrum(wls, params,z_obs) - F*scaleF
 
-    return 0.5*jnp.sum((resid/(sigma_obs*jnp.sqrt(scaleF)))** 2)
+    return jnp.sum((resid/(sigma_obs*jnp.sqrt(scaleF)))** 2)
 
 
 @jit
@@ -416,14 +423,16 @@ def lik_mag(p,xf,mags_measured, sigma_mag_obs,z_obs):
               "AV":p[13],
               "UV_BUMP":p[14],
               "PLAW_SLOPE":p[15],
-              "SCALEF":p[16]
+              
+              "LGMET":p[16],
+              "LGMETSCATTER":p[17],
              }
-    #scaleF =  params["SCALEF"]
+   
 
     all_mags_redictions = mean_mags(xf, params,z_obs)
     resid = mags_measured - all_mags_redictions
 
-    return 0.5*jnp.sum((resid/sigma_mag_obs)** 2)
+    return jnp.sum((resid/sigma_mag_obs)** 2)
 
 
 @jit

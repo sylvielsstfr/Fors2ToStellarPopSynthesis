@@ -35,33 +35,34 @@ AV = 1
 UV_BUMP_AMPL = 2.0
 PLAW_SLOPE = -0.25
 DEFAULT_DUST_PARAMS = [AV, UV_BUMP_AMPL, PLAW_SLOPE]
-DUST_PARAMNAMES = ["AV", "UV_BUMP_AMPL", "PLAW_SLOPE"]
+DUST_PARAMNAMES = ["AV", "UV_BUMP", "PLAW_SLOPE"]
 DEFAULT_DUST_PARAMS_MIN = DEFAULT_DUST_PARAMS + np.array([-1.,-1.,-0.1])
 DEFAULT_DUST_PARAMS_MAX = DEFAULT_DUST_PARAMS + np.array([2.,1.,0.25])
 
 
-#Scaling parameters
-SCALEF = 1.0
-DEFAULT_SCALEF_PARAMS = np.array([SCALEF])
-SCALEF_PARAMNAMES = ["SCALEF"]
-DEFAULT_SCALEF_PARAMS_MIN =  np.array([1.])
-DEFAULT_SCALEF_PARAMS_MAX = np.array([1.])
+#Metalicity parameters
+LGMET = -2.0
+LGMETSCATTER = 0.2
+DEFAULT_LGMET_PARAMS = np.array([LGMET,LGMETSCATTER ])
+LGMET_PARAMNAMES = ["LGMET","LGMETSCATTER"]
+DEFAULT_LGMET_PARAMS_MIN =  np.array([-4.34,0.1])
+DEFAULT_LGMET_PARAMS_MAX = np.array([-3.5,0.3])
 
 # bound parameters together
 DEFAULT_PARAMS = [DEFAULT_MAH_PARAMS,DEFAULT_MS_PARAMS,DEFAULT_Q_PARAMS,
-                  DEFAULT_DUST_PARAMS, DEFAULT_SCALEF_PARAMS ]
+                  DEFAULT_DUST_PARAMS, DEFAULT_LGMET_PARAMS ]
 
 PARAMS_MIN = np.concatenate(([DEFAULT_MAH_PARAMS_MIN,DEFAULT_MS_PARAMS_MIN,DEFAULT_Q_PARAMS_MIN,
-                              DEFAULT_DUST_PARAMS_MIN,DEFAULT_SCALEF_PARAMS_MIN]))
+                              DEFAULT_DUST_PARAMS_MIN,DEFAULT_LGMET_PARAMS_MIN]))
 PARAMS_MAX = np.concatenate(([DEFAULT_MAH_PARAMS_MAX,DEFAULT_MS_PARAMS_MAX,DEFAULT_Q_PARAMS_MAX,
-                              DEFAULT_DUST_PARAMS_MAX,DEFAULT_SCALEF_PARAMS_MAX]))
+                              DEFAULT_DUST_PARAMS_MAX,DEFAULT_LGMET_PARAMS_MAX]))
 #PARAMS_MIN= jnp.array(PARAMS_MIN)
 #PARAMS_MAX= jnp.array(PARAMS_MAX)
 
 INIT_PARAMS = np.concatenate(DEFAULT_PARAMS)
 INIT_PARAMS = jnp.array(INIT_PARAMS)
 
-PARAM_NAMES = [MAH_PARAMNAMES,MS_PARAMNAMES,Q_PARAMNAMES,DUST_PARAMNAMES,SCALEF_PARAMNAMES]
+PARAM_NAMES = [MAH_PARAMNAMES,MS_PARAMNAMES,Q_PARAMNAMES,DUST_PARAMNAMES,LGMET_PARAMNAMES]
 PARAM_NAMES_FLAT = list(itertools.chain(*PARAM_NAMES))
 
 DICT_PARAM_MAH_true = OrderedDict([(MAH_PARAMNAMES[0],DEFAULT_MAH_PARAMS[0]),
@@ -89,13 +90,14 @@ DICT_PARAM_DUST_true = OrderedDict([(DUST_PARAMNAMES[0],DEFAULT_DUST_PARAMS[0]),
                                          (DUST_PARAMNAMES[2],DEFAULT_DUST_PARAMS[2])])
 DICT_PARAM_DUST_true_selected = OrderedDict([(DUST_PARAMNAMES[0],DEFAULT_DUST_PARAMS[0])])
 
-DICT_PARAM_SCALEF_true = OrderedDict([(SCALEF_PARAMNAMES[0],DEFAULT_SCALEF_PARAMS[0]) ])
+DICT_PARAM_LGMET_true = OrderedDict([(LGMET_PARAMNAMES[0],DEFAULT_LGMET_PARAMS[0]),
+                                     (LGMET_PARAMNAMES[1],DEFAULT_LGMET_PARAMS[1]) ])
 
 DICT_PARAMS_true = DICT_PARAM_MAH_true
 DICT_PARAMS_true.update(DICT_PARAM_MS_true)
 DICT_PARAMS_true.update(DICT_PARAM_Q_true)
 DICT_PARAMS_true.update(DICT_PARAM_DUST_true)
-DICT_PARAMS_true.update(DICT_PARAM_SCALEF_true)
+DICT_PARAMS_true.update(DICT_PARAM_LGMET_true)
 
 # increase range of parameters
 # check in article
@@ -146,9 +148,9 @@ if FLAG_INCREASE_RANGE_Q:
     DEFAULT_Q_PARAMS_MAX[3] =  -0.1
 
 PARAMS_MIN = np.concatenate(([DEFAULT_MAH_PARAMS_MIN,DEFAULT_MS_PARAMS_MIN,DEFAULT_Q_PARAMS_MIN,
-                              DEFAULT_DUST_PARAMS_MIN,DEFAULT_SCALEF_PARAMS_MIN]))
+                              DEFAULT_DUST_PARAMS_MIN,DEFAULT_LGMET_PARAMS_MIN]))
 PARAMS_MAX = np.concatenate(([DEFAULT_MAH_PARAMS_MAX,DEFAULT_MS_PARAMS_MAX,DEFAULT_Q_PARAMS_MAX,
-                              DEFAULT_DUST_PARAMS_MAX,DEFAULT_SCALEF_PARAMS_MAX]))
+                              DEFAULT_DUST_PARAMS_MAX,DEFAULT_LGMET_PARAMS_MAX]))
 
 
 
@@ -175,6 +177,7 @@ def paramslist_to_dict(params_list,param_names):
 
 class SSPParametersFit():
     """Contain all necessary parameters to fit SSP
+    Note this class must use the values calculated outside this class
     """
     def __init__(self):
         """Book space for initialisation constants
@@ -189,41 +192,44 @@ class SSPParametersFit():
         self.MS_PARAMNAMES = ["MS_lgmcrit", "MS_lgy_at_mcrit", "MS_indx_lo", "MS_indx_hi", "MS_tau_dep"]
         self.Q_PARAMNAMES = ["Q_lg_qt", "Q_qlglgdt", "Q_lg_drop", "Q_lg_rejuv"]
 
-        self.DEFAULT_MAH_PARAMS_MIN = self.DEFAULT_MAH_PARAMS + np.array([-3., -0.01, -1.5,-0.5])
-        self.DEFAULT_MAH_PARAMS_MAX = self.DEFAULT_MAH_PARAMS + np.array([2., +0.01, +1.5,+0.5])
+        self.DEFAULT_MAH_PARAMS_MIN = DEFAULT_MAH_PARAMS_MIN
+        self.DEFAULT_MAH_PARAMS_MAX = DEFAULT_MAH_PARAMS_MAX
 
-        self.DEFAULT_MS_PARAMS_MIN = self.DEFAULT_MS_PARAMS - 0.25*np.ones((5))
-        self.DEFAULT_MS_PARAMS_MAX = self.DEFAULT_MS_PARAMS + 0.25*np.ones((5))
 
-        self.DEFAULT_Q_PARAMS_MIN = self.DEFAULT_Q_PARAMS - 0.1*np.ones((4,))
-        self.DEFAULT_Q_PARAMS_MAX = self.DEFAULT_Q_PARAMS + 0.1*np.ones((4,))
+        self.DEFAULT_MS_PARAMS_MIN = DEFAULT_MS_PARAMS_MIN
+        self.DEFAULT_MS_PARAMS_MAX = DEFAULT_MS_PARAMS_MAX
+
+        self.DEFAULT_Q_PARAMS_MIN = DEFAULT_Q_PARAMS_MIN
+        self.DEFAULT_Q_PARAMS_MAX = DEFAULT_Q_PARAMS_MAX
 
 
         # Dust parameters
-        self.AV = 1.0
-        self.UV_BUMP = 2.0
-        self.PLAW_SLOPE = -0.25
+        self.AV = AV
+        self.UV_BUMP = UV_BUMP_AMPL
+        self.PLAW_SLOPE = PLAW_SLOPE
         self.DEFAULT_DUST_PARAMS = [self.AV, self.UV_BUMP, self.PLAW_SLOPE]
-        self.DUST_PARAMNAMES = ["AV", "UV_BUMP", "PLAW_SLOPE"]
-        self.DEFAULT_DUST_PARAMS_MIN = self.DEFAULT_DUST_PARAMS + np.array([-1.,-1.,-0.1])
-        self.DEFAULT_DUST_PARAMS_MAX = self.DEFAULT_DUST_PARAMS + np.array([2.,1.,0.25])
+        self.DUST_PARAMNAMES = DUST_PARAMNAMES
+        self.DEFAULT_DUST_PARAMS_MIN = DEFAULT_DUST_PARAMS_MIN
+        self.DEFAULT_DUST_PARAMS_MAX = DEFAULT_DUST_PARAMS_MAX
 
 
-        #Scaling parameters
-        self.SCALEF = 1.0
-        self.DEFAULT_SCALEF_PARAMS = np.array([self.SCALEF])
-        self.SCALEF_PARAMNAMES = ["SCALEF"]
-        self.DEFAULT_SCALEF_PARAMS_MIN =  np.array([1.])
-        self.DEFAULT_SCALEF_PARAMS_MAX = np.array([1.])
+        #Metallicity parameters
+
+        self.LGMET = LGMET
+        self.LGMETSCATTER = LGMETSCATTER
+        self.DEFAULT_LGMET_PARAMS = np.array([self.LGMET,self.LGMETSCATTER])
+        self.LGMET_PARAMNAMES = LGMET_PARAMNAMES
+        self.DEFAULT_LGMET_PARAMS_MIN =  DEFAULT_LGMET_PARAMS_MIN
+        self.DEFAULT_LGMET_PARAMS_MAX = DEFAULT_LGMET_PARAMS_MAX
 
         # bound parameters together
         self.DEFAULT_PARAMS = [self.DEFAULT_MAH_PARAMS,self.DEFAULT_MS_PARAMS,self.DEFAULT_Q_PARAMS,
-                  self.DEFAULT_DUST_PARAMS, self.DEFAULT_SCALEF_PARAMS ]
+                  self.DEFAULT_DUST_PARAMS, self.DEFAULT_LGMET_PARAMS ]
 
         self.PARAMS_MIN = np.concatenate(([self.DEFAULT_MAH_PARAMS_MIN,self.DEFAULT_MS_PARAMS_MIN,self.DEFAULT_Q_PARAMS_MIN,
-                              self.DEFAULT_DUST_PARAMS_MIN,self.DEFAULT_SCALEF_PARAMS_MIN]))
+                              self.DEFAULT_DUST_PARAMS_MIN,self.DEFAULT_LGMET_PARAMS_MIN]))
         self.PARAMS_MAX = np.concatenate(([self.DEFAULT_MAH_PARAMS_MAX,self.DEFAULT_MS_PARAMS_MAX,self.DEFAULT_Q_PARAMS_MAX,
-                              self.DEFAULT_DUST_PARAMS_MAX,self.DEFAULT_SCALEF_PARAMS_MAX]))
+                              self.DEFAULT_DUST_PARAMS_MAX,self.DEFAULT_LGMET_PARAMS_MAX]))
 
         self.PARAMS_MIN= jnp.array(self.PARAMS_MIN)
         self.PARAMS_MAX= jnp.array(self.PARAMS_MAX)
@@ -231,7 +237,7 @@ class SSPParametersFit():
         self.INIT_PARAMS = np.concatenate(self.DEFAULT_PARAMS)
         self.INIT_PARAMS = jnp.array(INIT_PARAMS)
 
-        self.PARAM_NAMES = [self.MAH_PARAMNAMES,self.MS_PARAMNAMES,self.Q_PARAMNAMES,self.DUST_PARAMNAMES,self.SCALEF_PARAMNAMES]
+        self.PARAM_NAMES = [self.MAH_PARAMNAMES,self.MS_PARAMNAMES,self.Q_PARAMNAMES,self.DUST_PARAMNAMES,self.LGMET_PARAMNAMES]
         self.PARAM_NAMES_FLAT = list(itertools.chain(*self.PARAM_NAMES))
 
         self.DICT_PARAM_MAH_true = OrderedDict([(self.MAH_PARAMNAMES[0],self.DEFAULT_MAH_PARAMS[0]),
@@ -257,13 +263,14 @@ class SSPParametersFit():
                                          (self.DUST_PARAMNAMES[2],self.DEFAULT_DUST_PARAMS[2])])
 
 
-        self.DICT_PARAM_SCALEF_true = OrderedDict([(self.SCALEF_PARAMNAMES[0],self.DEFAULT_SCALEF_PARAMS[0]) ])
+        self.DICT_PARAM_LGMET_true = OrderedDict([(self.LGMET_PARAMNAMES[0],self.DEFAULT_LGMET_PARAMS[0]),
+                                                  (self.LGMET_PARAMNAMES[1],self.DEFAULT_LGMET_PARAMS[1]) ])
 
         self.DICT_PARAMS_true = self.DICT_PARAM_MAH_true
         self.DICT_PARAMS_true.update(self.DICT_PARAM_MS_true)
         self.DICT_PARAMS_true.update(self.DICT_PARAM_Q_true)
         self.DICT_PARAMS_true.update(self.DICT_PARAM_DUST_true)
-        self.DICT_PARAMS_true.update(self.DICT_PARAM_SCALEF_true)
+        self.DICT_PARAMS_true.update(self.DICT_PARAM_LGMET_true)
 
     def __repr__(self) -> str:
         all_str = []
