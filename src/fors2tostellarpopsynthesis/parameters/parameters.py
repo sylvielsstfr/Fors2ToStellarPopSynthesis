@@ -48,21 +48,30 @@ LGMET_PARAMNAMES = ["LGMET","LGMETSCATTER"]
 DEFAULT_LGMET_PARAMS_MIN =  np.array([-4.34,0.1])
 DEFAULT_LGMET_PARAMS_MAX = np.array([-3.5,0.3])
 
+# Age-dependant metallicity parameters
+LGMET_YOUNG = 1.
+LGMET_OLD = -2.
+DEFAULT_AGEDEPLGMET_PARAMS = np.array([LGMET_YOUNG, LGMET_OLD])
+AGEDEPLGMET_PARAMNAMES = ["LGMET_YOUNG","LGMET_OLD"]
+DEFAULT_AGEDEPLGMET_PARAMS_MIN =  np.array([0., -4.34])
+DEFAULT_AGEDEPLGMET_PARAMS_MAX = np.array([3., 0.])
+
 # bound parameters together
 DEFAULT_PARAMS = [DEFAULT_MAH_PARAMS,DEFAULT_MS_PARAMS,DEFAULT_Q_PARAMS,
-                  DEFAULT_DUST_PARAMS, DEFAULT_LGMET_PARAMS ]
+                  DEFAULT_DUST_PARAMS, DEFAULT_LGMET_PARAMS, DEFAULT_AGEDEPLGMET_PARAMS]
 
 PARAMS_MIN = np.concatenate(([DEFAULT_MAH_PARAMS_MIN,DEFAULT_MS_PARAMS_MIN,DEFAULT_Q_PARAMS_MIN,
-                              DEFAULT_DUST_PARAMS_MIN,DEFAULT_LGMET_PARAMS_MIN]))
+                              DEFAULT_DUST_PARAMS_MIN,DEFAULT_LGMET_PARAMS_MIN, DEFAULT_AGEDEPLGMET_PARAMS_MIN]))
 PARAMS_MAX = np.concatenate(([DEFAULT_MAH_PARAMS_MAX,DEFAULT_MS_PARAMS_MAX,DEFAULT_Q_PARAMS_MAX,
-                              DEFAULT_DUST_PARAMS_MAX,DEFAULT_LGMET_PARAMS_MAX]))
+                              DEFAULT_DUST_PARAMS_MAX,DEFAULT_LGMET_PARAMS_MAX, DEFAULT_AGEDEPLGMET_PARAMS_MAX]))
+
 #PARAMS_MIN= jnp.array(PARAMS_MIN)
 #PARAMS_MAX= jnp.array(PARAMS_MAX)
 
 INIT_PARAMS = np.concatenate(DEFAULT_PARAMS)
 INIT_PARAMS = jnp.array(INIT_PARAMS)
 
-PARAM_NAMES = [MAH_PARAMNAMES,MS_PARAMNAMES,Q_PARAMNAMES,DUST_PARAMNAMES,LGMET_PARAMNAMES]
+PARAM_NAMES = [MAH_PARAMNAMES, MS_PARAMNAMES, Q_PARAMNAMES, DUST_PARAMNAMES, LGMET_PARAMNAMES, AGEDEPLGMET_PARAMNAMES]
 PARAM_NAMES_FLAT = list(itertools.chain(*PARAM_NAMES))
 
 DICT_PARAM_MAH_true = OrderedDict([(MAH_PARAMNAMES[0],DEFAULT_MAH_PARAMS[0]),
@@ -93,11 +102,16 @@ DICT_PARAM_DUST_true_selected = OrderedDict([(DUST_PARAMNAMES[0],DEFAULT_DUST_PA
 DICT_PARAM_LGMET_true = OrderedDict([(LGMET_PARAMNAMES[0],DEFAULT_LGMET_PARAMS[0]),
                                      (LGMET_PARAMNAMES[1],DEFAULT_LGMET_PARAMS[1]) ])
 
+DICT_PARAM_AGEDEPLGMET_true = OrderedDict([(AGEDEPLGMET_PARAMNAMES[0], DEFAULT_AGEDEPLGMET_PARAMS[0]),\
+                                           (AGEDEPLGMET_PARAMNAMES[1], DEFAULT_AGEDEPLGMET_PARAMS[1])\
+                                          ])
+
 DICT_PARAMS_true = DICT_PARAM_MAH_true
 DICT_PARAMS_true.update(DICT_PARAM_MS_true)
 DICT_PARAMS_true.update(DICT_PARAM_Q_true)
 DICT_PARAMS_true.update(DICT_PARAM_DUST_true)
 DICT_PARAMS_true.update(DICT_PARAM_LGMET_true)
+DICT_PARAMS_true.update(DICT_PARAM_AGEDEPLGMET_true)
 
 # increase range of parameters
 # check in article
@@ -148,9 +162,9 @@ if FLAG_INCREASE_RANGE_Q:
     DEFAULT_Q_PARAMS_MAX[3] =  -0.1
 
 PARAMS_MIN = np.concatenate(([DEFAULT_MAH_PARAMS_MIN,DEFAULT_MS_PARAMS_MIN,DEFAULT_Q_PARAMS_MIN,
-                              DEFAULT_DUST_PARAMS_MIN,DEFAULT_LGMET_PARAMS_MIN]))
+                              DEFAULT_DUST_PARAMS_MIN,DEFAULT_LGMET_PARAMS_MIN, DEFAULT_AGEDEPLGMET_PARAMS_MIN]))
 PARAMS_MAX = np.concatenate(([DEFAULT_MAH_PARAMS_MAX,DEFAULT_MS_PARAMS_MAX,DEFAULT_Q_PARAMS_MAX,
-                              DEFAULT_DUST_PARAMS_MAX,DEFAULT_LGMET_PARAMS_MAX]))
+                              DEFAULT_DUST_PARAMS_MAX,DEFAULT_LGMET_PARAMS_MAX, DEFAULT_AGEDEPLGMET_PARAMS_MAX]))
 
 
 
@@ -214,22 +228,32 @@ class SSPParametersFit():
 
 
         #Metallicity parameters
-
         self.LGMET = LGMET
         self.LGMETSCATTER = LGMETSCATTER
         self.DEFAULT_LGMET_PARAMS = np.array([self.LGMET,self.LGMETSCATTER])
         self.LGMET_PARAMNAMES = LGMET_PARAMNAMES
-        self.DEFAULT_LGMET_PARAMS_MIN =  DEFAULT_LGMET_PARAMS_MIN
+        self.DEFAULT_LGMET_PARAMS_MIN = DEFAULT_LGMET_PARAMS_MIN
         self.DEFAULT_LGMET_PARAMS_MAX = DEFAULT_LGMET_PARAMS_MAX
 
-        # bound parameters together
-        self.DEFAULT_PARAMS = [self.DEFAULT_MAH_PARAMS,self.DEFAULT_MS_PARAMS,self.DEFAULT_Q_PARAMS,
-                  self.DEFAULT_DUST_PARAMS, self.DEFAULT_LGMET_PARAMS ]
 
-        self.PARAMS_MIN = np.concatenate(([self.DEFAULT_MAH_PARAMS_MIN,self.DEFAULT_MS_PARAMS_MIN,self.DEFAULT_Q_PARAMS_MIN,
-                              self.DEFAULT_DUST_PARAMS_MIN,self.DEFAULT_LGMET_PARAMS_MIN]))
-        self.PARAMS_MAX = np.concatenate(([self.DEFAULT_MAH_PARAMS_MAX,self.DEFAULT_MS_PARAMS_MAX,self.DEFAULT_Q_PARAMS_MAX,
-                              self.DEFAULT_DUST_PARAMS_MAX,self.DEFAULT_LGMET_PARAMS_MAX]))
+        #Age-dependant metallicity parameters
+        self.LGMET_YOUNG = LGMET_YOUNG
+        self.LGMET_OLD = LGMET_OLD
+        self.DEFAULT_AGEDEPLGMET_PARAMS = np.array([self.LGMET_YOUNG, self.LGMET_OLD])
+        self.AGEDEPLGMET_PARAMNAMES = AGEDEPLGMET_PARAMNAMES
+        self.DEFAULT_AGEDEPLGMET_PARAMS_MIN = DEFAULT_AGEDEPLGMET_PARAMS_MIN
+        self.DEFAULT_AGEDEPLGMET_PARAMS_MAX = DEFAULT_AGEDEPLGMET_PARAMS_MAX
+
+        # bound parameters together
+        self.DEFAULT_PARAMS = [self.DEFAULT_MAH_PARAMS,self.DEFAULT_MS_PARAMS,self.DEFAULT_Q_PARAMS,\
+                               self.DEFAULT_DUST_PARAMS, self.DEFAULT_LGMET_PARAMS, self.DEFAULT_AGEDEPLGMET_PARAMS ]
+
+        self.PARAMS_MIN = np.concatenate(([self.DEFAULT_MAH_PARAMS_MIN, self.DEFAULT_MS_PARAMS_MIN, self.DEFAULT_Q_PARAMS_MIN,\
+                                           self.DEFAULT_DUST_PARAMS_MIN, self.DEFAULT_LGMET_PARAMS_MIN,\
+                                           self.DEFAULT_AGEDEPLGMET_PARAMS_MIN]))
+        self.PARAMS_MAX = np.concatenate(([self.DEFAULT_MAH_PARAMS_MAX, self.DEFAULT_MS_PARAMS_MAX, self.DEFAULT_Q_PARAMS_MAX,\
+                                           self.DEFAULT_DUST_PARAMS_MAX, self.DEFAULT_LGMET_PARAMS_MAX,\
+                                           self.DEFAULT_AGEDEPLGMET_PARAMS_MAX]))
 
         self.PARAMS_MIN= jnp.array(self.PARAMS_MIN)
         self.PARAMS_MAX= jnp.array(self.PARAMS_MAX)
@@ -237,7 +261,8 @@ class SSPParametersFit():
         self.INIT_PARAMS = np.concatenate(self.DEFAULT_PARAMS)
         self.INIT_PARAMS = jnp.array(INIT_PARAMS)
 
-        self.PARAM_NAMES = [self.MAH_PARAMNAMES,self.MS_PARAMNAMES,self.Q_PARAMNAMES,self.DUST_PARAMNAMES,self.LGMET_PARAMNAMES]
+        self.PARAM_NAMES = [self.MAH_PARAMNAMES, self.MS_PARAMNAMES, self.Q_PARAMNAMES,\
+                            self.DUST_PARAMNAMES, self.LGMET_PARAMNAMES, self.AGEDEPLGMET_PARAMNAMES]
         self.PARAM_NAMES_FLAT = list(itertools.chain(*self.PARAM_NAMES))
 
         self.DICT_PARAM_MAH_true = OrderedDict([(self.MAH_PARAMNAMES[0],self.DEFAULT_MAH_PARAMS[0]),
@@ -266,11 +291,16 @@ class SSPParametersFit():
         self.DICT_PARAM_LGMET_true = OrderedDict([(self.LGMET_PARAMNAMES[0],self.DEFAULT_LGMET_PARAMS[0]),
                                                   (self.LGMET_PARAMNAMES[1],self.DEFAULT_LGMET_PARAMS[1]) ])
 
+        self.DICT_PARAM_AGEDEPLGMET_true = OrderedDict([(self.AGEDEPLGMET_PARAMNAMES[0], self.DEFAULT_AGEDEPLGMET_PARAMS[0]),\
+                                                        (self.AGEDEPLGMET_PARAMNAMES[1], self.DEFAULT_AGEDEPLGMET_PARAMS[1])\
+                                                       ])
+
         self.DICT_PARAMS_true = self.DICT_PARAM_MAH_true
         self.DICT_PARAMS_true.update(self.DICT_PARAM_MS_true)
         self.DICT_PARAMS_true.update(self.DICT_PARAM_Q_true)
         self.DICT_PARAMS_true.update(self.DICT_PARAM_DUST_true)
         self.DICT_PARAMS_true.update(self.DICT_PARAM_LGMET_true)
+        self.DICT_PARAMS_true.update(self.DICT_PARAM_AGEDEPLGMET_true)
 
     def __repr__(self) -> str:
         all_str = []

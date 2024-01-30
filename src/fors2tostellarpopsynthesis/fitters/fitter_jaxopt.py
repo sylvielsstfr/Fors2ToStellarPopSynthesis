@@ -28,6 +28,8 @@ from dsps.cosmology import DEFAULT_COSMOLOGY, age_at_z
 from dsps.dust.att_curves import (RV_C00, _frac_transmission_from_k_lambda,
                                   sbl18_k_lambda)
 
+from .met_weights_age_dep import calc_rest_sed_sfh_table_lognormal_mdf_agedep
+
 
 def _get_package_dir()-> str:
     """get the path of this fitters package
@@ -35,7 +37,8 @@ def _get_package_dir()-> str:
     dirname = os.path.dirname(__file__)
     return dirname
 
-FILENAME_SSP_DATA = 'data/tempdata.h5'
+#FILENAME_SSP_DATA = 'data/tempdata.h5'
+FILENAME_SSP_DATA = 'data/test_fspsData_v3_2_C3K.h5'
 FULLFILENAME_SSP_DATA = os.path.join(_get_package_dir(),FILENAME_SSP_DATA)
 SSP_DATA = load_ssp_templates(fn=FULLFILENAME_SSP_DATA)
 
@@ -196,9 +199,6 @@ def mean_spectrum(wls, params,z_obs):
     return Fobs
 
 
-
-
-
 @jit
 def mean_mags(X, params,z_obs):
     """ Return the photometric magnitudes for the given filters transmission
@@ -349,10 +349,129 @@ def mean_sfr(params,z_obs):
     t_obs = t_obs[0] # age_at_z function returns an array, but SED functions accept a float for this argument
 
     # clear sfh in future
-    sfh_gal = jnp.where(tarr<t_obs, sfh_gal, 0)
+    #sfh_gal = jnp.where(tarr<t_obs, sfh_gal, 0)
 
 
     return tarr,sfh_gal
+
+@jit
+def ssp_spectrum_fromparam_ageDepMet(params, z_obs):
+    """ Return the SED of SSP DSPS with original wavelength range wihout and with dust
+
+    :param params: parameters for the fit
+    :type params: dictionnary of parameters
+
+    :param z_obs: redshift at which the model SSP should be calculated
+    :type z_obs: float
+
+    :return: the wavelength and the spectrum with dust and no dust
+    :rtype: float
+
+    """
+
+    # compute the SFR
+    gal_t_table, gal_sfr_table = mean_sfr(params, z_obs)
+
+    # age-dependant metallicity
+    gal_lgmet_young = params["LGMET_YOUNG"] # log10(Z)
+    gal_lgmet_old = params["LGMET_OLD"] # log10(Z)
+    gal_lgmet_scatter = params["LGMETSCATTER"] # lognormal scatter in the metallicity distribution function
+    
+    # need age of universe when the light was emitted
+    t_obs = age_at_z(z_obs, *DEFAULT_COSMOLOGY) # age of the universe in Gyr at z_obs
+    t_obs = t_obs[0] # age_at_z function returns an array, but SED functions accept a float for this argument
+    
+    # compute the SED_info object
+    sed_info = calc_rest_sed_sfh_table_lognormal_mdf_agedep(gal_t_table,\
+                                                            gal_sfr_table,\
+                                                            gal_lgmet_young,\
+                                                            gal_lgmet_old,\
+                                                            gal_lgmet_scatter,\
+                                                            SSP_DATA.ssp_lgmet,\
+                                                            SSP_DATA.ssp_lg_age_gyr,\
+                                                            SSP_DATA.ssp_flux,\
+                                                            t_obs)
+    # dust attenuation parameters
+    Av = params["AV"]
+    uv_bump = params["UV_BUMP"]
+    plaw_slope = params["PLAW_SLOPE"]
+    list_param_dust = [Av,uv_bump,plaw_slope]
+
+    # compute dust attenuation
+    wave_spec_micron = SSP_DATA.ssp_wave/10_000
+    k = sbl18_k_lambda(wave_spec_micron, uv_bump, plaw_slope)
+    dsps_flux_ratio = _frac_transmission_from_k_lambda(k, Av)
+
+    sed_attenuated = dsps_flux_ratio * sed_info.rest_sed
+
+    return SSP_DATA.ssp_wave, sed_info.rest_sed, sed_attenuated
+
+@jit
+def mean_mags_ageDepMet(X, params, z_obs):
+    """ Return the photometric magnitudes for the given filters transmission
+    in X : predict the magnitudes in Filters
+
+    :param X: List of to be used (Galex, sdss, vircam)
+    :type X: a list of tuples of two arrays (one array with wavelength and one array of corresponding transmission)
+
+    :param params: Model parameters
+    :type params: Dictionnary of parameters
+
+    :param z_obs: redshift of the observations
+    :type z_obs: float
+
+    :return: array the predicted magnitude for the SED spectrum model represented by its parameters.
+    :rtype: float
+
+    """
+    
+    # get the restframe spectra without and with dust attenuation
+    ssp_wave, rest_sed, sed_attenuated = ssp_spectrum_fromparam_ageDepMet(params, z_obs)
+
+    # calculate magnitudes in observation frame
+    mags_predictions = []
+
+    #decode the two lists
+    list_wls_filters = X[0]
+    list_transm_filters = X[1]
+
+    #def vect_obs_mag(x,y):
+    #    obs_mag = calc_obs_mag(ssp_data.ssp_wave, sed_attenuated,x,y,z_obs, *DEFAULT_COSMOLOGY)
+
+    mags_predictions = jax.tree_map(lambda x,y : calc_obs_mag(ssp_wave, sed_attenuated,\
+                                                              x, y, z_obs, *DEFAULT_COSMOLOGY),\
+                                    list_wls_filters,\
+                                    list_transm_filters)
+    mags_predictions = jnp.array(mags_predictions)
+
+    return mags_predictions
+
+@jit
+def mean_spectrum_ageDepMet(wls, params, z_obs):
+    """ Return the Model of SSP spectrum including Dust at the wavelength wls
+
+    :param wls: wavelengths of the spectrum in rest frame
+    :type wls: float
+
+    :param params: parameters for the fit
+    :type params: dictionnary of parameters
+
+    :param z_obs: redshift at which the model SSP should be calculated
+    :type z_obs: float
+    :return: the spectrum
+    :rtype: float
+
+    """
+
+    # get the restframe spectra without and with dust attenuation
+    ssp_wave, rest_sed, sed_attenuated = ssp_spectrum_fromparam_ageDepMet(params, z_obs)
+
+    # interpolate with interpax which is differentiable
+    #Fobs = jnp.interp(wls, ssp_data.ssp_wave, sed_attenuated)
+    Fobs = interp1d(wls, ssp_wave, sed_attenuated, method='cubic')
+
+    return Fobs
+
 
 @jit
 def lik_spec(p,wls,F, sigma_obs,z_obs) -> float:
@@ -436,6 +555,90 @@ def lik_mag(p,xf,mags_measured, sigma_mag_obs,z_obs):
 
 
 @jit
+def lik_spec_ageDepMet(p, wls, F, sigma_obs, z_obs) -> float:
+    """
+    neg loglikelihood(parameters,x,y,sigmas) for the spectrum
+
+    :param p: flat array of parameters to fit
+    :param z_obs: redshift of the observations
+    :type z_obs: float
+    :return: the chi2 value
+    :rtype: float
+    """
+
+    params = {"MAH_lgmO":p[0],
+              "MAH_logtc":p[1],
+              "MAH_early_index":p[2],
+              "MAH_late_index": p[3],
+
+              "MS_lgmcrit":p[4],
+              "MS_lgy_at_mcrit":p[5],
+              "MS_indx_lo":p[6],
+              "MS_indx_hi":p[7],
+              "MS_tau_dep":p[8],
+
+              "Q_lg_qt":p[9],
+              "Q_qlglgdt":p[10],
+              "Q_lg_drop":p[11],
+              "Q_lg_rejuv":p[12],
+
+              "AV":p[13],
+              "UV_BUMP":p[14],
+              "PLAW_SLOPE":p[15],
+
+              "LGMET":p[16],
+              "LGMETSCATTER":p[17],
+              "LGMET_YOUNG":p[18],
+              "LGMET_OLD":p[19],
+             }
+    
+    # rescaling parameter for spectra  are pre-calculated and applied to data
+    scaleF =  1.0
+    # residuals
+    resid = mean_spectrum_ageDepMet(wls, params, z_obs) - F*scaleF
+
+    return jnp.sum((resid/(sigma_obs*jnp.sqrt(scaleF)))** 2)
+
+
+@jit
+def lik_mag_ageDepMet(p, xf, mags_measured, sigma_mag_obs, z_obs):
+    """
+    neg loglikelihood(parameters,x,y,sigmas) for the photometry
+    """
+
+    params = {"MAH_lgmO":p[0],
+              "MAH_logtc":p[1],
+              "MAH_early_index":p[2],
+              "MAH_late_index": p[3],
+
+              "MS_lgmcrit":p[4],
+              "MS_lgy_at_mcrit":p[5],
+              "MS_indx_lo":p[6],
+              "MS_indx_hi":p[7],
+              "MS_tau_dep":p[8],
+
+              "Q_lg_qt":p[9],
+              "Q_qlglgdt":p[10],
+              "Q_lg_drop":p[11],
+              "Q_lg_rejuv":p[12],
+
+              "AV":p[13],
+              "UV_BUMP":p[14],
+              "PLAW_SLOPE":p[15],
+              
+              "LGMET":p[16],
+              "LGMETSCATTER":p[17],
+              "LGMET_YOUNG":p[18],
+              "LGMET_OLD":p[19],
+             }
+
+    all_mags_predictions = mean_mags_ageDepMet(xf, params, z_obs)
+    resid = mags_measured - all_mags_predictions
+
+    return jnp.sum((resid/sigma_mag_obs)** 2)
+
+
+@jit
 def lik_comb(p,xc,datac, sigmac, z_obs,weight= 0.5):
     """
     neg loglikelihood(parameters,xc,yc,sigmasc) combining the spectroscopy and the photometry
@@ -449,6 +652,23 @@ def lik_comb(p,xc,datac, sigmac, z_obs,weight= 0.5):
 
     resid_spec = lik_spec(p,xc[0],datac[0], sigmac[0],z_obs)
     resid_phot = lik_mag(p,xc[1],datac[1], sigmac[1],z_obs)
+
+    return weight*resid_spec + (1-weight)*resid_phot
+
+@jit
+def lik_comb_ageDepMet(p, xc, datac, sigmac, z_obs, weight=0.5):
+    """
+    neg loglikelihood(parameters,xc,yc,sigmasc) combining the spectroscopy and the photometry
+
+    Xc = [Xspec_data, Xf_sel]
+    Yc = [Yspec_data, mags_measured ]
+    EYc = [EYspec_data, data_selected_magserr]
+
+    weight must be between 0 and 1
+    """
+
+    resid_spec = lik_spec_ageDepMet(p, xc[0], datac[0], sigmac[0], z_obs)
+    resid_phot = lik_mag_ageDepMet(p, xc[1], datac[1], sigmac[1], z_obs)
 
     return weight*resid_spec + (1-weight)*resid_phot
 
