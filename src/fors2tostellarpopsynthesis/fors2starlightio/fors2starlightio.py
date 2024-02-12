@@ -164,7 +164,7 @@ def convert_flux_torestframe(wl: np.array,fl: np.array,redshift:float=0.) -> tup
     :rtype: tuple[np.array, np.array]
     """
     factor = 1.+redshift
-    return wl/factor,fl*factor
+    return wl/factor,fl #*factor
 
 def convert_flux_toobsframe(wl: np.array,fl: np.array,redshift:float=0.) -> tuple[np.array, np.array] :
     """convert flux to observed frame
@@ -179,7 +179,7 @@ def convert_flux_toobsframe(wl: np.array,fl: np.array,redshift:float=0.) -> tupl
     :rtype: tuple[np.array, np.array]
     """
     factor = 1.+redshift
-    return wl*factor,fl/factor
+    return wl*factor,fl #/factor
 
 
 
@@ -337,13 +337,41 @@ class Fors2DataAcess():
         """
         attrs = self.getattribdata_fromgroup(specname)
 
-        mags = np.array([ attrs["fuv_mag"], attrs["nuv_mag"], attrs['MAG_GAAP_u'], attrs['MAG_GAAP_g'], attrs['MAG_GAAP_r'], attrs['MAG_GAAP_i'], attrs['MAG_GAAP_Z'], attrs['MAG_GAAP_Y'],
-            attrs['MAG_GAAP_J'], attrs['MAG_GAAP_H'],attrs['MAG_GAAP_Ks'] ])
+        mags = np.array([attrs["fuv_mag"], attrs["nuv_mag"],\
+                         attrs['MAG_GAAP_u'] + attrs['EXTINCTION_u'], attrs['MAG_GAAP_g'] + attrs['EXTINCTION_g'],\
+                         attrs['MAG_GAAP_r'] + attrs['EXTINCTION_r'], attrs['MAG_GAAP_i'] + attrs['EXTINCTION_i'],\
+                         attrs['MAG_GAAP_Z'], attrs['MAG_GAAP_Y'],\
+                         attrs['MAG_GAAP_J'], attrs['MAG_GAAP_H'], attrs['MAG_GAAP_Ks']\
+                        ])
 
-        magserr = np.array([ attrs["fuv_magerr"], attrs["nuv_magerr"], attrs['MAGERR_GAAP_u'], attrs['MAGERR_GAAP_g'], attrs['MAGERR_GAAP_r'], attrs['MAGERR_GAAP_i'], attrs['MAGERR_GAAP_Z'], attrs['MAGERR_GAAP_Y'],
-            attrs['MAGERR_GAAP_J'], attrs['MAGERR_GAAP_H'],attrs['MAGERR_GAAP_Ks'] ])
+        magserr = np.array([attrs["fuv_magerr"], attrs["nuv_magerr"],\
+                            attrs['MAGERR_GAAP_u'], attrs['MAGERR_GAAP_g'],\
+                            attrs['MAGERR_GAAP_r'], attrs['MAGERR_GAAP_i'],\
+                            attrs['MAGERR_GAAP_Z'], attrs['MAGERR_GAAP_Y'],\
+                            attrs['MAGERR_GAAP_J'], attrs['MAGERR_GAAP_H'], attrs['MAGERR_GAAP_Ks']\
+                           ])
 
-        return mags,magserr
+        return mags, magserr
+
+    def get_ugrimagnitudes_corrected(self, specname:str) -> tuple[np.array,np.array]:
+        """get magnitudes and errors from phtometric surveys
+
+        :param specname: spectrum name
+        :type specname: str
+        :return: magnitude and errors on magnitudes
+        :rtype: tuple[np.array,np.array]
+        """
+        attrs = self.getattribdata_fromgroup(specname)
+
+        mags = np.array([attrs['MAG_GAAP_u'], attrs['MAG_GAAP_g'],\
+                         attrs['MAG_GAAP_r'], attrs['MAG_GAAP_i']\
+                        ])
+
+        magserr = np.array([attrs['MAGERR_GAAP_u'], attrs['MAGERR_GAAP_g'],\
+                            attrs['MAGERR_GAAP_r'], attrs['MAGERR_GAAP_i']\
+                           ])
+
+        return mags, magserr
 
     def get_photfluxes(self,specname:str) -> tuple[np.array,np.array]:
         """get fluxes and errors from photometric surveys

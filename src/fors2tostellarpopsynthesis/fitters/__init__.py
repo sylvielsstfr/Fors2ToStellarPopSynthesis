@@ -3,11 +3,11 @@ from .fitter_jaxopt import (FILENAME_SSP_DATA, FULLFILENAME_SSP_DATA, SSP_DATA,
                             get_infos_spec, lik_comb, lik_mag, lik_spec,
                             mean_mags, mean_sfr, mean_spectrum,
                             ssp_spectrum_fromparam)
-from .fitter_numpyro import (PARAM_MAX, PARAM_MIN, PARAM_NAMES, PARAM_SIGMA,
-                             PARAM_SIMLAW_NODUST, PARAM_SIMLAW_WITHDUST,
-                             PARAM_VAL, galaxymodel_nodust,
-                             galaxymodel_nodust_av, galaxymodel_withdust,
-                             galaxymodel_withdust_av)
+#from .fitter_numpyro import (PARAM_MAX, PARAM_MIN, PARAM_NAMES, PARAM_SIGMA,
+#                             PARAM_SIMLAW_NODUST, PARAM_SIMLAW_WITHDUST,
+#                             PARAM_VAL, galaxymodel_nodust,
+#                             galaxymodel_nodust_av, galaxymodel_withdust,
+#                             galaxymodel_withdust_av)
 from .fitter_util import (plot_fit_ssp_photometry,
                           plot_fit_ssp_spectrophotometry,
                           plot_fit_ssp_spectrophotometry_sl,
@@ -30,9 +30,9 @@ __all__ = ["_get_package_dir",
            "plot_fit_ssp_spectrophotometry",
            "plot_fit_ssp_spectrophotometry_sl",
            "plot_SFH",
-           "plot_params_kde",
-           "PARAM_SIMLAW_NODUST","PARAM_SIMLAW_WITHDUST",
-           "PARAM_NAMES","PARAM_VAL","PARAM_MIN","PARAM_MAX",
-           "PARAM_SIGMA","galaxymodel_nodust_av","galaxymodel_nodust",
-           "galaxymodel_withdust_av","galaxymodel_withdust"
-           ]
+           "plot_params_kde"] #,
+           #"PARAM_SIMLAW_NODUST","PARAM_SIMLAW_WITHDUST",
+           #"PARAM_NAMES","PARAM_VAL","PARAM_MIN","PARAM_MAX",
+           #"PARAM_SIGMA","galaxymodel_nodust_av","galaxymodel_nodust",
+           #"galaxymodel_withdust_av","galaxymodel_withdust"
+           #]
